@@ -3,9 +3,11 @@
 namespace App\Services\Finance;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use App\Models\AcademicSession;
 use App\Models\FeeStructure;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -64,12 +66,12 @@ class InvoiceGenerator
     /**
      * Apply a successful payment to its invoice and refresh the status.
      */
-    public function applyPayment(\App\Models\Payment $payment): Invoice
+    public function applyPayment(Payment $payment): Invoice
     {
         $invoice = $payment->invoice;
 
         $paid = $invoice->payments()
-            ->where('status', \App\Enums\PaymentStatus::Successful)
+            ->where('status', PaymentStatus::Successful)
             ->sum('amount');
 
         $invoice->amount_paid = $paid;

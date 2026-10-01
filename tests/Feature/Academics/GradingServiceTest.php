@@ -6,7 +6,7 @@ use Database\Seeders\GradeScaleSeeder;
 
 beforeEach(function () {
     $this->seed(GradeScaleSeeder::class);
-    $this->grading = new GradingService();
+    $this->grading = new GradingService;
 });
 
 it('resolves NUC 5-point grades correctly', function (float $score, string $letter, float $point, bool $pass) {

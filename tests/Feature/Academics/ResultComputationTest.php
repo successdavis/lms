@@ -16,8 +16,8 @@ use Database\Seeders\RoleSeeder;
 
 beforeEach(function () {
     $this->seed([RoleSeeder::class, GradeScaleSeeder::class, LevelSeeder::class, DemoSeeder::class]);
-    $this->grading = new GradingService();
-    $this->computer = new ResultComputationService();
+    $this->grading = new GradingService;
+    $this->computer = new ResultComputationService;
     $this->student = Student::firstOrFail();
     $this->semester = Semester::where('number', 1)->firstOrFail();
 });

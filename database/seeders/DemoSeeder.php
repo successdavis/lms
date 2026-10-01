@@ -182,7 +182,7 @@ class DemoSeeder extends Seeder
         );
         $lecturerUser->assignRole('lecturer');
 
-        Staff::updateOrCreate(
+        $lecturer = Staff::updateOrCreate(
             ['staff_no' => 'FUTD/AC/0001'],
             [
                 'user_id' => $lecturerUser->id,
@@ -191,6 +191,17 @@ class DemoSeeder extends Seeder
                 'designation' => 'Senior Lecturer',
             ],
         );
+
+        // Allocate the demo lecturer to the first-semester CSC courses.
+        foreach (['CSC 101', 'MTH 101'] as $code) {
+            $lecturer->courseAllocations()->updateOrCreate(
+                [
+                    'course_id' => Course::where('code', $code)->firstOrFail()->id,
+                    'semester_id' => $first->id,
+                ],
+                ['is_coordinator' => $code === 'CSC 101'],
+            );
+        }
 
         $studentUser = User::updateOrCreate(
             ['email' => 'student@demo.edu.ng'],

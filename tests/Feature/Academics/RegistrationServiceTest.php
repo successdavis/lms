@@ -19,7 +19,7 @@ use Database\Seeders\RoleSeeder;
 
 beforeEach(function () {
     $this->seed([RoleSeeder::class, GradeScaleSeeder::class, LevelSeeder::class, DemoSeeder::class]);
-    $this->service = new RegistrationService();
+    $this->service = new RegistrationService;
     $this->student = Student::firstOrFail();
     $this->semester = Semester::where('number', 1)->firstOrFail();
     // Inside the demo semester's registration window.
@@ -32,7 +32,7 @@ beforeEach(function () {
 
 function payAllInvoices(Student $student): void
 {
-    $generator = new InvoiceGenerator();
+    $generator = new InvoiceGenerator;
     $invoice = $generator->generateFor($student, AcademicSession::current());
 
     $payment = $invoice->payments()->create([
@@ -54,7 +54,7 @@ it('rejects registration outside the registration window', function () {
 })->throws(RegistrationException::class, 'not open');
 
 it('blocks registration until registration-blocking fees are paid', function () {
-    $generator = new InvoiceGenerator();
+    $generator = new InvoiceGenerator;
     $generator->generateFor($this->student, AcademicSession::current()); // unpaid invoice
 
     $this->service->register($this->student, $this->semester, $this->firstSemesterCourseIds);
@@ -96,7 +96,7 @@ it('forces outstanding carryovers to be registered first', function () {
         'course_id' => $csc101->id,
         'credit_units' => $csc101->credit_units,
     ]);
-    (new GradingService())->grade($registered, 10, 20); // 30 => F
+    (new GradingService)->grade($registered, 10, 20); // 30 => F
 
     $withoutCarryover = Course::whereIn('code', [
         'MTH 101', 'PHY 101', 'STA 111', 'GST 111', 'GST 112',
@@ -123,7 +123,7 @@ it('flags carryover line items when the failed course is included', function () 
         'course_id' => $csc101->id,
         'credit_units' => $csc101->credit_units,
     ]);
-    (new GradingService())->grade($registered, 10, 20); // F
+    (new GradingService)->grade($registered, 10, 20); // F
 
     $new = $this->service->register($this->student, $this->semester, $this->firstSemesterCourseIds);
 

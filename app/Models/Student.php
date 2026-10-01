@@ -7,6 +7,7 @@ use App\Enums\StudentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Student extends Model
 {
@@ -66,9 +67,9 @@ class Student extends Model
      * Courses failed in senate-approved results and not yet passed — the
      * student's outstanding carryovers.
      *
-     * @return \Illuminate\Support\Collection<int, Course>
+     * @return Collection<int, Course>
      */
-    public function outstandingCarryovers(): \Illuminate\Support\Collection
+    public function outstandingCarryovers(): Collection
     {
         $attempts = Result::query()
             ->whereHas('registeredCourse.courseRegistration', fn ($q) => $q->where('student_id', $this->id))

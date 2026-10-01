@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'payments' => [
+        // Which gateway students pay through: paystack (remita, flutterwave,
+        // interswitch to follow). With demo=true every payment succeeds
+        // instantly without contacting a gateway — for local development only.
+        'default' => env('PAYMENT_GATEWAY', 'paystack'),
+        'demo' => env('PAYMENT_DEMO_MODE', true),
+    ],
+
+    'paystack' => [
+        'secret' => env('PAYSTACK_SECRET_KEY'),
+        'public' => env('PAYSTACK_PUBLIC_KEY'),
+    ],
+
 ];

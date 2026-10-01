@@ -7,8 +7,10 @@ use App\Exceptions\RegistrationException;
 use App\Models\Course;
 use App\Models\CourseRegistration;
 use App\Models\Institution;
+use App\Models\Result;
 use App\Models\Semester;
 use App\Models\Student;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class RegistrationService
@@ -112,11 +114,11 @@ class RegistrationService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Course>  $courses
+     * @param  Collection<int, Course>  $courses
      */
     private function assertPrerequisitesMet(Student $student, $courses): void
     {
-        $passedCourseIds = \App\Models\Result::query()
+        $passedCourseIds = Result::query()
             ->where('is_passed', true)
             ->whereHas('registeredCourse.courseRegistration', fn ($q) => $q->where('student_id', $student->id))
             ->with('registeredCourse:id,course_id')

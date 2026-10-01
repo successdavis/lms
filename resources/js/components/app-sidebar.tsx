@@ -2,18 +2,38 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, CheckSquare, ClipboardList, Folder, GraduationCap, LayoutGrid, Users, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
+function navItemsFor(roles: string[]): NavItem[] {
+    const has = (...names: string[]) => names.some((name) => roles.includes(name));
+    const items: NavItem[] = [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }];
+
+    if (has('student')) {
+        items.push(
+            { title: 'My Dashboard', url: '/student/dashboard', icon: GraduationCap },
+            { title: 'Course Registration', url: '/student/registration', icon: ClipboardList },
+            { title: 'My Results', url: '/student/results', icon: BookOpen },
+            { title: 'Fees & Payments', url: '/student/fees', icon: Wallet },
+        );
+    }
+
+    if (has('lecturer', 'hod', 'dean')) {
+        items.push({ title: 'My Courses', url: '/lecturer/courses', icon: BookOpen });
+    }
+
+    if (has('hod', 'dean', 'exam-officer', 'registrar', 'super-admin')) {
+        items.push({ title: 'Result Approvals', url: '/staff/approvals', icon: CheckSquare });
+    }
+
+    if (has('registrar', 'admission-officer', 'super-admin')) {
+        items.push({ title: 'Students', url: '/admin/students', icon: Users });
+    }
+
+    return items;
+}
 
 const footerNavItems: NavItem[] = [
     {
@@ -29,6 +49,9 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<SharedData>().props;
+    const mainNavItems = navItemsFor(auth.roles ?? []);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

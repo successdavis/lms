@@ -14,12 +14,16 @@
 - [x] Roles & permissions, seeders with realistic Nigerian demo data
 
 ## Phase 2 — Portals
-- [ ] Student portal: dashboard, course registration UI, results/transcript view, fee payment
-      (Paystack/Remita/Flutterwave checkout + webhooks), printable course form & exam card
-- [ ] Lecturer portal: allocated courses, score sheet upload (CSV + inline grid), result submission
-- [ ] HOD/Dean: result approval queues, departmental analytics
-- [ ] Bursary: fee structure management, payment reconciliation, revenue reports
-- [ ] Registrar: student records, matric number generation, status changes
+- [x] Student portal: dashboard, course registration UI (carryover-first, unit-load feedback),
+      results view with GPA/CGPA/classification, invoices & fee payment (gateway abstraction:
+      demo driver + Paystack driver; Remita/Flutterwave to follow)
+- [x] Lecturer portal: allocated courses, inline score-sheet grid, locked after approval
+- [x] HOD/Dean/Registrar: result approval queues (pending → HOD → faculty → senate) with GPA
+      snapshotting on final approval
+- [x] Registrar: student records with search
+- [ ] Bursary: fee structure management UI, payment reconciliation, revenue reports
+- [ ] Printable documents: course form, exam card, receipts (print views/PDF)
+- [ ] Score-sheet CSV upload; Paystack webhooks; Remita (RRR) & Flutterwave drivers
 
 ## Phase 3 — Admissions
 - [ ] Applicant portal (separate guard): application forms, post-UTME screening scores
