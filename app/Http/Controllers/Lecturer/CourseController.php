@@ -131,6 +131,92 @@ class CourseController extends Controller
         return back()->with('success', 'Scores saved.');
     }
 
+    /**
+     * Bulk score upload from a CSV with header: matric_no, ca_score, exam_score.
+     * Rows are matched to this semester's registered students by matric number;
+     * every bad row is reported with its line number, good rows still save.
+     */
+    public function storeCsv(Request $request, Course $course, GradingService $grading): RedirectResponse
+    {
+        $staff = $request->user()->staff()->firstOrFail();
+        $semester = Semester::current();
+
+        abort_if($semester === null, 404, 'No current semester.');
+        $this->assertAllocated($staff->id, $course->id, $semester->id);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ]);
+
+        $handle = fopen($request->file('file')->getRealPath(), 'r');
+        $header = array_map(fn ($h) => strtolower(trim((string) $h)), fgetcsv($handle) ?: []);
+
+        $required = ['matric_no', 'ca_score', 'exam_score'];
+        if (array_diff($required, $header) !== []) {
+            fclose($handle);
+
+            return back()->withErrors(['file' => 'CSV header must contain: matric_no, ca_score, exam_score.']);
+        }
+
+        $registered = RegisteredCourse::query()
+            ->where('course_id', $course->id)
+            ->whereHas('courseRegistration', fn ($q) => $q->where('semester_id', $semester->id))
+            ->with(['courseRegistration.student:id,matric_no,programme_id', 'result'])
+            ->get()
+            ->keyBy(fn (RegisteredCourse $rc) => $rc->courseRegistration->student->matric_no);
+
+        $errors = [];
+        $saved = 0;
+        $line = 1;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $line++;
+
+            if ($row === [null] || $row === ['']) {
+                continue; // blank line
+            }
+
+            $data = array_combine($header, array_pad(array_map('trim', $row), count($header), ''));
+            $matric = $data['matric_no'] ?? '';
+            $rc = $registered->get($matric);
+
+            if ($rc === null) {
+                $errors["csv.{$line}"] = "Line {$line}: {$matric} is not registered for {$course->code} this semester.";
+
+                continue;
+            }
+
+            if ($rc->result !== null && $rc->result->status !== ResultStatus::Pending) {
+                $errors["csv.{$line}"] = "Line {$line}: {$matric} result already approved and locked.";
+
+                continue;
+            }
+
+            if (! is_numeric($data['ca_score']) || ! is_numeric($data['exam_score'])) {
+                $errors["csv.{$line}"] = "Line {$line}: CA and exam scores must be numeric.";
+
+                continue;
+            }
+
+            try {
+                $grading->grade($rc, (float) $data['ca_score'], (float) $data['exam_score'], $staff->id);
+                $saved++;
+            } catch (\InvalidArgumentException $e) {
+                $errors["csv.{$line}"] = "Line {$line}: {$e->getMessage()}";
+            }
+        }
+
+        fclose($handle);
+
+        if ($errors !== []) {
+            return back()
+                ->with($saved > 0 ? 'success' : 'error', "{$saved} score(s) saved; ".count($errors).' row(s) rejected.')
+                ->withErrors($errors);
+        }
+
+        return back()->with('success', "{$saved} score(s) saved from CSV.");
+    }
+
     private function assertAllocated(int $staffId, int $courseId, int $semesterId): void
     {
         $allocated = CourseAllocation::query()

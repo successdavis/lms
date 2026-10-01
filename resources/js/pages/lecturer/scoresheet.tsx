@@ -37,6 +37,24 @@ export default function Scoresheet({ course, semester, students }: Props) {
         Object.fromEntries(students.map((s) => [s.registered_course_id, { ca: s.ca_score ?? '', exam: s.exam_score ?? '' }])),
     );
     const [saving, setSaving] = useState(false);
+    const [csvFile, setCsvFile] = useState<File | null>(null);
+
+    const uploadCsv = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!csvFile) return;
+        setSaving(true);
+        router.post(
+            `/lecturer/courses/${course.id}/scores/csv`,
+            { file: csvFile },
+            {
+                forceFormData: true,
+                onFinish: () => {
+                    setSaving(false);
+                    setCsvFile(null);
+                },
+            },
+        );
+    };
 
     const update = (id: number, field: 'ca' | 'exam', value: string) => {
         setScores((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -131,7 +149,19 @@ export default function Scoresheet({ course, semester, students }: Props) {
                         {students.length === 0 ? (
                             <p className="text-muted-foreground py-6 text-center text-sm">No students registered for this course yet.</p>
                         ) : (
-                            <div className="flex justify-end pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+                                <form onSubmit={uploadCsv} className="flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        accept=".csv,text/csv"
+                                        onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
+                                        className="text-sm"
+                                    />
+                                    <Button type="submit" variant="outline" disabled={!csvFile || saving}>
+                                        Upload CSV
+                                    </Button>
+                                    <span className="text-muted-foreground text-xs">columns: matric_no, ca_score, exam_score</span>
+                                </form>
                                 <Button onClick={submit} disabled={saving}>
                                     Save scores
                                 </Button>

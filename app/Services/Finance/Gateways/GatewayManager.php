@@ -26,6 +26,8 @@ class GatewayManager
 
         return match ($gateway) {
             PaymentGateway::Paystack => app(PaystackGateway::class),
+            PaymentGateway::Remita => app(RemitaGateway::class),
+            PaymentGateway::Flutterwave => app(FlutterwaveGateway::class),
             default => throw new InvalidArgumentException(
                 "No driver implemented for gateway [{$gateway->value}] yet."
             ),

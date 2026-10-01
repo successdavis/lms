@@ -176,6 +176,21 @@ class DemoSeeder extends Seeder
         );
         $admin->assignRole('super-admin');
 
+        $bursarUser = User::updateOrCreate(
+            ['email' => 'bursar@demo.edu.ng'],
+            ['name' => 'Mrs. Funke Adeyemi', 'password' => Hash::make('password')],
+        );
+        $bursarUser->assignRole('bursar');
+
+        Staff::updateOrCreate(
+            ['staff_no' => 'FUTD/NA/0001'],
+            [
+                'user_id' => $bursarUser->id,
+                'type' => StaffType::NonAcademic,
+                'designation' => 'Bursar',
+            ],
+        );
+
         $lecturerUser = User::updateOrCreate(
             ['email' => 'lecturer@demo.edu.ng'],
             ['name' => 'Dr. Ada Obi', 'password' => Hash::make('password')],

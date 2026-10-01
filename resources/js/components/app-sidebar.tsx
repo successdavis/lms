@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, CheckSquare, ClipboardList, Folder, GraduationCap, LayoutGrid, Users, Wallet } from 'lucide-react';
+import { BarChart3, BookOpen, CheckSquare, ClipboardList, Folder, GraduationCap, LayoutGrid, Receipt, Users, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
 function navItemsFor(roles: string[]): NavItem[] {
@@ -30,6 +30,14 @@ function navItemsFor(roles: string[]): NavItem[] {
 
     if (has('registrar', 'admission-officer', 'super-admin')) {
         items.push({ title: 'Students', url: '/admin/students', icon: Users });
+    }
+
+    if (has('bursar', 'registrar', 'super-admin')) {
+        items.push(
+            { title: 'Fee Management', url: '/bursary/fees', icon: Wallet },
+            { title: 'Payments', url: '/bursary/payments', icon: Receipt },
+            { title: 'Revenue Reports', url: '/bursary/reports', icon: BarChart3 },
+        );
     }
 
     return items;

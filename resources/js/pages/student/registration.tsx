@@ -66,6 +66,14 @@ export default function Registration({ semester, registrationOpen, curriculum, c
                             <CardTitle className="flex items-center gap-2 text-base">
                                 Current registration <Badge>{registration.status}</Badge>
                                 <span className="text-muted-foreground text-sm font-normal">{registration.total_units} units</span>
+                                <span className="ml-auto flex gap-3 text-sm font-normal">
+                                    <a href="/student/print/course-form" target="_blank" rel="noreferrer" className="underline">
+                                        Print course form
+                                    </a>
+                                    <a href="/student/print/exam-card" target="_blank" rel="noreferrer" className="underline">
+                                        Print exam card
+                                    </a>
+                                </span>
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

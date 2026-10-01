@@ -21,9 +21,12 @@
 - [x] HOD/Dean/Registrar: result approval queues (pending → HOD → faculty → senate) with GPA
       snapshotting on final approval
 - [x] Registrar: student records with search
-- [ ] Bursary: fee structure management UI, payment reconciliation, revenue reports
-- [ ] Printable documents: course form, exam card, receipts (print views/PDF)
-- [ ] Score-sheet CSV upload; Paystack webhooks; Remita (RRR) & Flutterwave drivers
+- [x] Bursary: fee type/rule management UI, payment reconciliation (bank-teller recording,
+      pending confirmation), revenue reports per session
+- [x] Printable documents: course registration form, exam card (gated on full payment +
+      registration), payment receipts
+- [x] Score-sheet CSV upload with per-row validation
+- [x] Paystack & Flutterwave signed webhooks; Remita (RRR) and Flutterwave drivers
 
 ## Phase 3 — Admissions
 - [ ] Applicant portal (separate guard): application forms, post-UTME screening scores

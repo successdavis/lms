@@ -100,6 +100,16 @@ export default function Fees({ invoices, session, hasCurrentInvoice }: Props) {
                                                     {payment.gateway}
                                                     {payment.paid_at ? ` · ${new Date(payment.paid_at).toLocaleString()}` : ''}
                                                 </span>
+                                                {payment.status === 'successful' && (
+                                                    <a
+                                                        href={`/student/print/receipts/${payment.id}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-xs underline"
+                                                    >
+                                                        Receipt
+                                                    </a>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

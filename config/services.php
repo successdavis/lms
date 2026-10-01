@@ -48,4 +48,21 @@ return [
         'public' => env('PAYSTACK_PUBLIC_KEY'),
     ],
 
+    'remita' => [
+        'merchant_id' => env('REMITA_MERCHANT_ID'),
+        'service_type_id' => env('REMITA_SERVICE_TYPE_ID'),
+        'api_key' => env('REMITA_API_KEY'),
+        // Demo: https://remitademo.net/remita/exapp/api/v1/send/api
+        'base_url' => env('REMITA_BASE_URL', 'https://login.remita.net/remita/exapp/api/v1/send/api'),
+        // Demo: https://remitademo.net/remita
+        'base_url_root' => env('REMITA_BASE_URL_ROOT', 'https://login.remita.net/remita'),
+    ],
+
+    'flutterwave' => [
+        'secret' => env('FLUTTERWAVE_SECRET_KEY'),
+        // The value you set as "secret hash" in the Flutterwave dashboard;
+        // sent back verbatim in the verif-hash webhook header.
+        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH'),
+    ],
+
 ];
