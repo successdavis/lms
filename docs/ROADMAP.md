@@ -29,9 +29,18 @@
 - [x] Paystack & Flutterwave signed webhooks; Remita (RRR) and Flutterwave drivers
 
 ## Phase 3 — Admissions
-- [ ] Applicant portal (separate guard): application forms, post-UTME screening scores
-- [ ] Admission lists (merit, catch-up/supplementary), acceptance fee flow
-- [ ] Conversion of admitted applicants to students (matriculation)
+- [x] Admission cycles per session: application window, screening weights (UTME/Post-UTME,
+      default 60/40), default aggregate cutoff
+- [x] Applicant portal: self-service application form (biodata, programme choice, JAMB
+      details), submit/lock, status tracker, offer acceptance, printable admission letter
+- [x] Admissions office: applicant list with filters, inline post-UTME score entry, one-click
+      screening (aggregate computation), admission lists (merit/supplementary) with
+      cutoff-based auto-admit and manual admit (cutoff override), list publishing
+- [x] Matriculation: accepted applicants converted to students (matric number generated,
+      role swapped applicant → student); acceptance fee lands on the first session invoice,
+      which gates course registration
+- [ ] Application fee payment before submission; JAMB CAPS status fields; O'level
+      document upload & verification checklist
 
 ## Phase 4 — Extended administration
 - [ ] Transcript generation (PDF) & dispatch tracking

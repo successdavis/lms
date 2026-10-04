@@ -4,12 +4,29 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, CheckSquare, ClipboardList, Folder, GraduationCap, LayoutGrid, Receipt, Users, Wallet } from 'lucide-react';
+import {
+    BarChart3,
+    BookOpen,
+    CheckSquare,
+    ClipboardList,
+    FileText,
+    Folder,
+    GraduationCap,
+    LayoutGrid,
+    ListChecks,
+    Receipt,
+    Users,
+    Wallet,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 function navItemsFor(roles: string[]): NavItem[] {
     const has = (...names: string[]) => names.some((name) => roles.includes(name));
     const items: NavItem[] = [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }];
+
+    if (has('applicant')) {
+        items.push({ title: 'My Application', url: '/apply', icon: FileText });
+    }
 
     if (has('student')) {
         items.push(
@@ -29,7 +46,11 @@ function navItemsFor(roles: string[]): NavItem[] {
     }
 
     if (has('registrar', 'admission-officer', 'super-admin')) {
-        items.push({ title: 'Students', url: '/admin/students', icon: Users });
+        items.push(
+            { title: 'Students', url: '/admin/students', icon: Users },
+            { title: 'Applicants', url: '/admissions/applicants', icon: FileText },
+            { title: 'Admission Lists', url: '/admissions/lists', icon: ListChecks },
+        );
     }
 
     if (has('bursar', 'registrar', 'super-admin')) {

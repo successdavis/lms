@@ -17,6 +17,7 @@ class RoleSeeder extends Seeder
             'registrar',
             'bursar',
             'admission-officer',
+            'applicant',
             'dean',
             'hod',
             'exam-officer',

@@ -7,6 +7,8 @@ use App\Enums\EntryMode;
 use App\Enums\InstitutionType;
 use App\Enums\StaffType;
 use App\Models\AcademicSession;
+use App\Models\AdmissionCycle;
+use App\Models\Applicant;
 use App\Models\Course;
 use App\Models\Department;
 use App\Models\Faculty;
@@ -69,6 +71,18 @@ class DemoSeeder extends Seeder
                 'ends_on' => '2026-07-17',
                 'registration_opens_at' => '2026-03-09 08:00:00',
                 'registration_closes_at' => '2026-04-10 23:59:59',
+            ],
+        );
+
+        $cycle = AdmissionCycle::updateOrCreate(
+            ['academic_session_id' => $session->id],
+            [
+                'opens_at' => '2025-08-01 08:00:00',
+                'closes_at' => '2025-12-31 23:59:59',
+                'utme_weight' => 60,
+                'post_utme_weight' => 40,
+                'default_cutoff' => 50,
+                'is_active' => true,
             ],
         );
 
@@ -236,6 +250,31 @@ class DemoSeeder extends Seeder
                 'gender' => 'male',
                 'state_of_origin' => 'Anambra',
                 'lga_of_origin' => 'Awka South',
+            ],
+        );
+
+        $applicantUser = User::updateOrCreate(
+            ['email' => 'applicant@demo.edu.ng'],
+            ['name' => 'Ngozi Eze', 'password' => Hash::make('password')],
+        );
+        $applicantUser->assignRole('applicant');
+
+        Applicant::updateOrCreate(
+            ['user_id' => $applicantUser->id, 'admission_cycle_id' => $cycle->id],
+            [
+                'application_no' => 'APP-2025-00001',
+                'status' => 'submitted',
+                'programme_id' => $bscCsc->id,
+                'entry_mode' => 'utme',
+                'jamb_reg_no' => '202541089722EF',
+                'utme_score' => 281,
+                'gender' => 'female',
+                'date_of_birth' => '2007-03-14',
+                'phone' => '08030000000',
+                'state_of_origin' => 'Enugu',
+                'lga_of_origin' => 'Nsukka',
+                'address' => '12 Zik Avenue, Enugu',
+                'submitted_at' => now(),
             ],
         );
     }

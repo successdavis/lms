@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admissions\AdmissionListController;
+use App\Http\Controllers\Admissions\ApplicantController as AdmissionsApplicantController;
+use App\Http\Controllers\Applicant\ApplicationController;
 use App\Http\Controllers\Bursary\FeeStructureController;
 use App\Http\Controllers\Bursary\PaymentController as BursaryPaymentController;
 use App\Http\Controllers\Bursary\ReportController;
@@ -59,6 +62,28 @@ Route::middleware(['auth', 'role:bursar|registrar|super-admin'])->prefix('bursar
     Route::patch('payments/{payment}', [BursaryPaymentController::class, 'update'])->name('payments.update');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+});
+
+// Applicant portal: open to any authenticated user without a staff/student
+// role; saving an application assigns the applicant role.
+Route::middleware(['auth'])->prefix('apply')->name('applicant.')->group(function () {
+    Route::get('/', [ApplicationController::class, 'show'])->name('show');
+    Route::post('/', [ApplicationController::class, 'store'])->name('store');
+    Route::post('submit', [ApplicationController::class, 'submit'])->name('submit');
+    Route::post('accept', [ApplicationController::class, 'accept'])->name('accept');
+    Route::get('print/admission-letter', [ApplicationController::class, 'admissionLetter'])->name('print.letter');
+});
+
+Route::middleware(['auth', 'role:admission-officer|registrar|super-admin'])->prefix('admissions')->name('admissions.')->group(function () {
+    Route::get('applicants', [AdmissionsApplicantController::class, 'index'])->name('applicants.index');
+    Route::patch('applicants/{applicant}/score', [AdmissionsApplicantController::class, 'updateScore'])->name('applicants.score');
+    Route::post('screen', [AdmissionsApplicantController::class, 'screen'])->name('screen');
+
+    Route::get('lists', [AdmissionListController::class, 'index'])->name('lists.index');
+    Route::post('lists', [AdmissionListController::class, 'store'])->name('lists.store');
+    Route::post('lists/{list}/publish', [AdmissionListController::class, 'publish'])->name('lists.publish');
+    Route::post('lists/{list}/admit', [AdmissionListController::class, 'admit'])->name('lists.admit');
+    Route::post('lists/{list}/matriculate', [AdmissionListController::class, 'matriculate'])->name('lists.matriculate');
 });
 
 // Gateway webhooks: signature-authenticated, CSRF-exempt (see bootstrap/app.php).

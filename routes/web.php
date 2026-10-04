@@ -15,6 +15,10 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('student.dashboard');
         }
 
+        if ($user->hasRole('applicant') || $user->getRoleNames()->isEmpty()) {
+            return redirect()->route('applicant.show');
+        }
+
         if ($user->hasAnyRole(['lecturer']) && ! $user->hasAnyRole(['hod', 'dean', 'registrar', 'super-admin'])) {
             return redirect()->route('lecturer.courses.index');
         }
