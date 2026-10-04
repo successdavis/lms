@@ -39,8 +39,12 @@
 - [x] Matriculation: accepted applicants converted to students (matric number generated,
       role swapped applicant → student); acceptance fee lands on the first session invoice,
       which gates course registration
-- [ ] Application fee payment before submission; JAMB CAPS status fields; O'level
-      document upload & verification checklist
+- [x] Application fee paid through the gateway layer before submission (payments can now
+      belong to an applicant instead of a student/invoice)
+- [x] JAMB CAPS status tracking per applicant (record-keeping; CAPS has no public API)
+- [x] Credential uploads (O'level, JAMB slip, birth certificate, LGA ID) with an
+      admissions-office verification checklist (verify/reject with notes), private storage
+      and owner-only downloads
 
 ## Phase 4 — Extended administration
 - [ ] Transcript generation (PDF) & dispatch tracking

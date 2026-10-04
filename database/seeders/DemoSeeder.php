@@ -82,6 +82,7 @@ class DemoSeeder extends Seeder
                 'utme_weight' => 60,
                 'post_utme_weight' => 40,
                 'default_cutoff' => 50,
+                'application_fee' => 2000,
                 'is_active' => true,
             ],
         );

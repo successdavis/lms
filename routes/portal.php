@@ -72,11 +72,21 @@ Route::middleware(['auth'])->prefix('apply')->name('applicant.')->group(function
     Route::post('submit', [ApplicationController::class, 'submit'])->name('submit');
     Route::post('accept', [ApplicationController::class, 'accept'])->name('accept');
     Route::get('print/admission-letter', [ApplicationController::class, 'admissionLetter'])->name('print.letter');
+
+    Route::post('fees/pay', [ApplicationController::class, 'payFee'])->name('fees.pay');
+    Route::get('fees/payments/{payment}/verify', [ApplicationController::class, 'verifyFee'])->name('fees.verify');
+
+    Route::post('documents', [ApplicationController::class, 'uploadDocument'])->name('documents.store');
+    Route::get('documents/{document}/download', [ApplicationController::class, 'downloadDocument'])->name('documents.download');
 });
 
 Route::middleware(['auth', 'role:admission-officer|registrar|super-admin'])->prefix('admissions')->name('admissions.')->group(function () {
     Route::get('applicants', [AdmissionsApplicantController::class, 'index'])->name('applicants.index');
+    Route::get('applicants/{applicant}', [AdmissionsApplicantController::class, 'show'])->name('applicants.show');
     Route::patch('applicants/{applicant}/score', [AdmissionsApplicantController::class, 'updateScore'])->name('applicants.score');
+    Route::patch('applicants/{applicant}/caps', [AdmissionsApplicantController::class, 'updateCaps'])->name('applicants.caps');
+    Route::patch('documents/{document}', [AdmissionsApplicantController::class, 'updateDocument'])->name('documents.update');
+    Route::get('documents/{document}/download', [AdmissionsApplicantController::class, 'downloadDocument'])->name('documents.download');
     Route::post('screen', [AdmissionsApplicantController::class, 'screen'])->name('screen');
 
     Route::get('lists', [AdmissionListController::class, 'index'])->name('lists.index');

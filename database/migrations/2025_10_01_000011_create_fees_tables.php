@@ -55,8 +55,10 @@ return new class extends Migration
 
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('student_id')->constrained()->cascadeOnDelete();
+            // Nullable: applicant payments (application fee) have no invoice
+            // or student; applicant_id is added by the admissions migration.
+            $table->foreignId('invoice_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('student_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('gateway');                    // PaymentGateway
             $table->string('reference')->unique();        // gateway transaction reference
             $table->string('rrr')->nullable();            // Remita Retrieval Reference

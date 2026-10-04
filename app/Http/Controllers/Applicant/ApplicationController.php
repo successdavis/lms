@@ -3,18 +3,26 @@
 namespace App\Http\Controllers\Applicant;
 
 use App\Enums\ApplicantStatus;
+use App\Enums\DocumentStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdmissionCycle;
 use App\Models\Applicant;
+use App\Models\ApplicantDocument;
 use App\Models\Institution;
+use App\Models\Payment;
 use App\Models\Programme;
 use App\Services\Admissions\AdmissionService;
+use App\Services\Finance\Gateways\GatewayManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicationController extends Controller
 {
@@ -37,7 +45,7 @@ class ApplicationController extends Controller
             ? Applicant::query()
                 ->where('user_id', $user->id)
                 ->where('admission_cycle_id', $cycle->id)
-                ->with(['programme:id,name,code', 'admittedProgramme:id,name,code', 'admissionList:id,name,published_at'])
+                ->with(['programme:id,name,code', 'admittedProgramme:id,name,code', 'admissionList:id,name,published_at', 'documents'])
                 ->first()
             : null;
 
@@ -49,6 +57,9 @@ class ApplicationController extends Controller
             ] : null,
             'applicant' => $applicant,
             'programmes' => Programme::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            'applicationFee' => $cycle ? (float) $cycle->application_fee : 0,
+            'applicationFeePaid' => $applicant?->hasPaidApplicationFee() ?? false,
+            'documentTypes' => ApplicantDocument::TYPES,
         ]);
     }
 
@@ -110,6 +121,10 @@ class ApplicationController extends Controller
             return back()->withErrors(['application' => 'The application window has closed.']);
         }
 
+        if (! $applicant->hasPaidApplicationFee()) {
+            return back()->withErrors(['application' => 'Pay the application fee before submitting.']);
+        }
+
         $applicant->update(['status' => ApplicantStatus::Submitted, 'submitted_at' => now()]);
 
         return back()->with('success', "Application {$applicant->application_no} submitted. Await screening.");
@@ -153,6 +168,84 @@ class ApplicationController extends Controller
             'admitted_on' => $applicant->admitted_at?->toFormattedDateString(),
             'accepted' => $applicant->status !== ApplicantStatus::Admitted,
         ]);
+    }
+
+    public function payFee(Request $request, GatewayManager $gateways): \Symfony\Component\HttpFoundation\Response|RedirectResponse
+    {
+        $applicant = $this->ownApplicant($request);
+
+        if ($applicant->hasPaidApplicationFee()) {
+            return back()->withErrors(['application' => 'The application fee has already been paid.']);
+        }
+
+        $payment = Payment::create([
+            'applicant_id' => $applicant->id,
+            'gateway' => $gateways->defaultGateway(),
+            'reference' => 'APPFEE-'.Str::upper(Str::random(12)),
+            'amount' => $applicant->cycle->application_fee,
+            'status' => PaymentStatus::Pending,
+        ]);
+
+        $redirectUrl = $gateways->driver($payment->gateway)->initialize($payment);
+
+        if ($redirectUrl !== null) {
+            return Inertia::location($redirectUrl);
+        }
+
+        return back()->with('success', 'Application fee paid.');
+    }
+
+    public function verifyFee(Request $request, Payment $payment, GatewayManager $gateways): RedirectResponse
+    {
+        $applicant = $this->ownApplicant($request);
+
+        abort_unless($payment->applicant_id === $applicant->id, 403);
+
+        $succeeded = $gateways->driver($payment->gateway)->verify($payment);
+
+        return redirect()
+            ->route('applicant.show')
+            ->with($succeeded ? 'success' : 'error', $succeeded ? 'Application fee confirmed.' : 'Payment was not successful.');
+    }
+
+    public function uploadDocument(Request $request): RedirectResponse
+    {
+        $applicant = $this->ownApplicant($request);
+
+        $validated = $request->validate([
+            'type' => ['required', Rule::in(array_keys(ApplicantDocument::TYPES))],
+            'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:4096'],
+        ]);
+
+        // Replace an earlier unverified upload of the same type.
+        $existing = $applicant->documents()
+            ->where('type', $validated['type'])
+            ->whereNot('status', DocumentStatus::Verified)
+            ->first();
+
+        if ($existing !== null) {
+            Storage::disk('local')->delete($existing->path);
+            $existing->delete();
+        }
+
+        $path = $request->file('file')->store("applicant-documents/{$applicant->id}", 'local');
+
+        $applicant->documents()->create([
+            'type' => $validated['type'],
+            'path' => $path,
+            'original_name' => $request->file('file')->getClientOriginalName(),
+        ]);
+
+        return back()->with('success', 'Document uploaded for verification.');
+    }
+
+    public function downloadDocument(Request $request, ApplicantDocument $document): StreamedResponse
+    {
+        $applicant = $this->ownApplicant($request);
+
+        abort_unless($document->applicant_id === $applicant->id, 403);
+
+        return Storage::disk('local')->download($document->path, $document->original_name);
     }
 
     private function ownApplicant(Request $request): Applicant

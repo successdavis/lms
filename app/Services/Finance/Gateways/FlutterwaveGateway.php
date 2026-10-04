@@ -19,14 +19,14 @@ class FlutterwaveGateway implements PaymentGatewayInterface
                 'tx_ref' => $payment->reference,
                 'amount' => (string) $payment->amount,
                 'currency' => 'NGN',
-                'redirect_url' => route('student.fees.verify', $payment),
+                'redirect_url' => $payment->verificationUrl(),
                 'customer' => [
-                    'email' => $payment->student->user->email,
-                    'name' => $payment->student->user->name,
+                    'email' => $payment->payerUser()?->email,
+                    'name' => $payment->payerUser()?->name,
                 ],
                 'customizations' => [
                     'title' => config('app.name'),
-                    'description' => 'School fees payment '.$payment->invoice->number,
+                    'description' => $payment->description(),
                 ],
             ])
             ->throw()
@@ -61,7 +61,9 @@ class FlutterwaveGateway implements PaymentGatewayInterface
         ]);
 
         if ($succeeded) {
-            $this->invoices->applyPayment($payment);
+            if ($payment->invoice_id !== null) {
+                $this->invoices->applyPayment($payment);
+            }
         }
 
         return $succeeded;

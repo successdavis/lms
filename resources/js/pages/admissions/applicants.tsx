@@ -129,7 +129,12 @@ export default function Applicants({ cycle, applicants, filters, programmes, cou
                                     {applicants.data.map((applicant) => (
                                         <tr key={applicant.id} className="border-b last:border-0">
                                             <td className="py-2 pr-2">
-                                                <div>{applicant.user.name}</div>
+                                                <a
+                                                    href={`/admissions/applicants/${applicant.id}`}
+                                                    className="font-medium underline-offset-2 hover:underline"
+                                                >
+                                                    {applicant.user.name}
+                                                </a>
                                                 <div className="text-muted-foreground font-mono text-xs">
                                                     {applicant.application_no}
                                                     {applicant.jamb_reg_no ? ` · ${applicant.jamb_reg_no}` : ''}

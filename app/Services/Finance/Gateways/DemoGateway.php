@@ -22,7 +22,9 @@ class DemoGateway implements PaymentGatewayInterface
             'channel' => 'demo',
         ]);
 
-        $this->invoices->applyPayment($payment);
+        if ($payment->invoice_id !== null) {
+            $this->invoices->applyPayment($payment);
+        }
 
         return null;
     }

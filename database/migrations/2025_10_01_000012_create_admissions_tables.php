@@ -18,6 +18,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('utme_weight')->default(60);
             $table->unsignedTinyInteger('post_utme_weight')->default(40);
             $table->decimal('default_cutoff', 5, 2)->default(50);  // aggregate (0-100)
+            // Post-UTME/screening form fee; 0 = free application.
+            $table->decimal('application_fee', 10, 2)->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
@@ -71,12 +73,37 @@ return new class extends Migration
             $table->foreignId('student_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
 
+            // JAMB CAPS (Central Admissions Processing System) tracking —
+            // record-keeping only; CAPS has no public API.
+            $table->string('caps_status')->nullable(); // CapsStatus
+
             $table->unique(['admission_cycle_id', 'jamb_reg_no']);
+        });
+
+        // Credentials uploaded by applicants for clearance verification.
+        Schema::create('applicant_documents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('applicant_id')->constrained()->cascadeOnDelete();
+            $table->string('type');   // olevel_result, jamb_result, birth_certificate, lga_identification, other
+            $table->string('path');
+            $table->string('original_name');
+            $table->string('status')->default('pending'); // DocumentStatus
+            $table->string('note')->nullable();           // reviewer's remark (esp. on rejection)
+            $table->foreignId('verified_by_id')->nullable()->constrained('users');
+            $table->dateTime('verified_at')->nullable();
+            $table->timestamps();
+        });
+
+        // Application-fee payments reference the applicant, not an invoice.
+        Schema::table('payments', function (Blueprint $table) {
+            $table->foreignId('applicant_id')->nullable()->after('student_id')->constrained()->cascadeOnDelete();
         });
     }
 
     public function down(): void
     {
+        Schema::table('payments', fn (Blueprint $table) => $table->dropConstrainedForeignId('applicant_id'));
+        Schema::dropIfExists('applicant_documents');
         Schema::dropIfExists('applicants');
         Schema::dropIfExists('admission_lists');
         Schema::dropIfExists('admission_cycles');

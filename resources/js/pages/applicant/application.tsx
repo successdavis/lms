@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'My Application', href: '/apply' }];
 
@@ -29,10 +30,21 @@ interface Applicant {
     programme_id: number;
 }
 
+interface ApplicantDocument {
+    id: number;
+    type: string;
+    original_name: string;
+    status: string;
+    note: string | null;
+}
+
 interface Props {
     cycle: { session: string; open: boolean; closes_at: string | null } | null;
-    applicant: Applicant | null;
+    applicant: (Applicant & { documents?: ApplicantDocument[] }) | null;
     programmes: { id: number; name: string; code: string }[];
+    applicationFee: number;
+    applicationFeePaid: boolean;
+    documentTypes: Record<string, string>;
 }
 
 const statusHints: Record<string, string> = {
@@ -45,7 +57,18 @@ const statusHints: Record<string, string> = {
     rejected: 'You were not offered admission in this cycle.',
 };
 
-export default function Application({ cycle, applicant, programmes }: Props) {
+const naira = (value: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 }).format(value);
+
+export default function Application({ cycle, applicant, programmes, applicationFee, applicationFeePaid, documentTypes }: Props) {
+    const [docType, setDocType] = useState('olevel_result');
+    const [docFile, setDocFile] = useState<File | null>(null);
+
+    const uploadDocument = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!docFile) return;
+        router.post('/apply/documents', { type: docType, file: docFile }, { forceFormData: true, onSuccess: () => setDocFile(null) });
+    };
+
     const editable = cycle?.open && (!applicant || applicant.status === 'draft');
 
     const form = useForm({
@@ -106,7 +129,23 @@ export default function Application({ cycle, applicant, programmes }: Props) {
                                     )}
                                 </div>
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                    {applicant.status === 'draft' && <Button onClick={() => router.post('/apply/submit')}>Submit application</Button>}
+                                    {applicant.status === 'draft' && applicationFee > 0 && !applicationFeePaid && (
+                                        <Button onClick={() => router.post('/apply/fees/pay')}>Pay application fee ({naira(applicationFee)})</Button>
+                                    )}
+                                    {applicant.status === 'draft' && (
+                                        <Button
+                                            variant={applicationFeePaid ? 'default' : 'outline'}
+                                            disabled={applicationFee > 0 && !applicationFeePaid}
+                                            onClick={() => router.post('/apply/submit')}
+                                        >
+                                            Submit application
+                                        </Button>
+                                    )}
+                                    {applicationFee > 0 && (
+                                        <Badge variant={applicationFeePaid ? 'default' : 'destructive'}>
+                                            Application fee: {applicationFeePaid ? 'paid' : `${naira(applicationFee)} due`}
+                                        </Badge>
+                                    )}
                                     {applicant.status === 'admitted' && (
                                         <Button onClick={() => router.post('/apply/accept')}>Accept admission offer</Button>
                                     )}
@@ -118,6 +157,63 @@ export default function Application({ cycle, applicant, programmes }: Props) {
                                 </div>
                             </CardContent>
                         )}
+                    </Card>
+                )}
+
+                {cycle && applicant && applicant.status !== 'matriculated' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Credentials for clearance</CardTitle>
+                            <p className="text-muted-foreground text-sm">
+                                Upload clear scans (PDF/JPG/PNG, max 4&nbsp;MB). The admissions office verifies each document; rejected documents can
+                                be re-uploaded.
+                            </p>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <form onSubmit={uploadDocument} className="flex flex-wrap items-center gap-2">
+                                <select
+                                    className="bg-background rounded-md border px-2 py-2 text-sm"
+                                    value={docType}
+                                    onChange={(e) => setDocType(e.target.value)}
+                                >
+                                    {Object.entries(documentTypes).map(([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    className="text-sm"
+                                    onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                                />
+                                <Button type="submit" variant="outline" disabled={!docFile}>
+                                    Upload
+                                </Button>
+                            </form>
+
+                            {(applicant.documents ?? []).length > 0 && (
+                                <ul className="space-y-1 text-sm">
+                                    {(applicant.documents ?? []).map((doc) => (
+                                        <li key={doc.id} className="flex flex-wrap items-center gap-2 rounded border p-2">
+                                            <span className="font-medium">{documentTypes[doc.type] ?? doc.type}</span>
+                                            <a href={`/apply/documents/${doc.id}/download`} className="text-xs underline">
+                                                {doc.original_name}
+                                            </a>
+                                            <Badge
+                                                variant={
+                                                    doc.status === 'verified' ? 'default' : doc.status === 'rejected' ? 'destructive' : 'outline'
+                                                }
+                                            >
+                                                {doc.status}
+                                            </Badge>
+                                            {doc.note && <span className="text-muted-foreground text-xs">{doc.note}</span>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </CardContent>
                     </Card>
                 )}
 

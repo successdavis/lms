@@ -31,4 +31,32 @@ class Payment extends Model
     {
         return $this->belongsTo(Student::class);
     }
+
+    public function applicant(): BelongsTo
+    {
+        return $this->belongsTo(Applicant::class);
+    }
+
+    /**
+     * Payments are made either by a student (against an invoice) or by an
+     * applicant (application fee). These helpers give gateways one payer API.
+     */
+    public function payerUser(): ?User
+    {
+        return $this->student?->user ?? $this->applicant?->user;
+    }
+
+    public function description(): string
+    {
+        return $this->invoice !== null
+            ? 'School fees payment '.$this->invoice->number
+            : 'Application fee '.($this->applicant?->application_no ?? $this->reference);
+    }
+
+    public function verificationUrl(): string
+    {
+        return $this->applicant_id !== null
+            ? route('applicant.fees.verify', $this)
+            : route('student.fees.verify', $this);
+    }
 }

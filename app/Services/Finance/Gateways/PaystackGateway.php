@@ -16,10 +16,10 @@ class PaystackGateway implements PaymentGatewayInterface
     {
         $response = Http::withToken($this->secret())
             ->post('https://api.paystack.co/transaction/initialize', [
-                'email' => $payment->student->user->email,
+                'email' => $payment->payerUser()?->email,
                 'amount' => (int) round((float) $payment->amount * 100), // kobo
                 'reference' => $payment->reference,
-                'callback_url' => route('student.fees.verify', $payment),
+                'callback_url' => $payment->verificationUrl(),
             ])
             ->throw()
             ->json();
@@ -50,7 +50,9 @@ class PaystackGateway implements PaymentGatewayInterface
         ]);
 
         if ($succeeded) {
-            $this->invoices->applyPayment($payment);
+            if ($payment->invoice_id !== null) {
+                $this->invoices->applyPayment($payment);
+            }
         }
 
         return $succeeded;

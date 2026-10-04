@@ -16,6 +16,7 @@ class AdmissionCycle extends Model
             'opens_at' => 'datetime',
             'closes_at' => 'datetime',
             'default_cutoff' => 'decimal:2',
+            'application_fee' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }

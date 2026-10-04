@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Enums\ApplicantStatus;
+use App\Enums\CapsStatus;
 use App\Enums\EntryMode;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Applicant extends Model
 {
@@ -15,6 +18,7 @@ class Applicant extends Model
     {
         return [
             'status' => ApplicantStatus::class,
+            'caps_status' => CapsStatus::class,
             'entry_mode' => EntryMode::class,
             'date_of_birth' => 'date',
             'post_utme_score' => 'decimal:2',
@@ -55,5 +59,28 @@ class Applicant extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ApplicantDocument::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function hasPaidApplicationFee(): bool
+    {
+        $fee = (float) $this->cycle->application_fee;
+
+        if ($fee <= 0) {
+            return true;
+        }
+
+        return (float) $this->payments()
+            ->where('status', PaymentStatus::Successful)
+            ->sum('amount') >= $fee;
     }
 }

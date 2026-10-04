@@ -35,10 +35,10 @@ class RemitaGateway implements PaymentGatewayInterface
             'serviceTypeId' => $serviceTypeId,
             'amount' => $amount,
             'orderId' => $orderId,
-            'payerName' => $payment->student->user->name,
-            'payerEmail' => $payment->student->user->email,
-            'payerPhone' => $payment->student->phone ?? '',
-            'description' => 'School fees payment '.$payment->invoice->number,
+            'payerName' => $payment->payerUser()?->name,
+            'payerEmail' => $payment->payerUser()?->email,
+            'payerPhone' => $payment->student?->phone ?? $payment->applicant?->phone ?? '',
+            'description' => $payment->description(),
         ])->throw();
 
         $data = $this->decodeJsonp($response->body());
@@ -89,7 +89,9 @@ class RemitaGateway implements PaymentGatewayInterface
                 'channel' => $data['channnel'] ?? $data['channel'] ?? 'remita',
                 'meta' => $data,
             ]);
-            $this->invoices->applyPayment($payment);
+            if ($payment->invoice_id !== null) {
+                $this->invoices->applyPayment($payment);
+            }
         } else {
             $payment->update(['meta' => $data]);
         }

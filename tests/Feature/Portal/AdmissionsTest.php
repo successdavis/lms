@@ -48,6 +48,10 @@ it('lets a new user start and submit an application', function () {
     $applicant = Applicant::where('user_id', $user->id)->firstOrFail();
     expect($applicant->status)->toBe(ApplicantStatus::Draft);
 
+    // The cycle charges a N2,000 application fee: submission is gated on it.
+    $this->actingAs($user)->post('/apply/submit')->assertSessionHasErrors('application');
+    $this->actingAs($user)->post('/apply/fees/pay')->assertRedirect(); // demo gateway: instant success
+
     $this->actingAs($user)->post('/apply/submit')->assertRedirect()->assertSessionHasNoErrors();
 
     expect($applicant->fresh()->status)->toBe(ApplicantStatus::Submitted);

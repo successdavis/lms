@@ -3,15 +3,21 @@
 namespace App\Http\Controllers\Admissions;
 
 use App\Enums\ApplicantStatus;
+use App\Enums\CapsStatus;
+use App\Enums\DocumentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdmissionCycle;
 use App\Models\Applicant;
+use App\Models\ApplicantDocument;
 use App\Models\Programme;
 use App\Services\Admissions\AdmissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicantController extends Controller
 {
@@ -62,6 +68,61 @@ class ApplicantController extends Controller
                     ->pluck('total', 'status')
                 : collect(),
         ]);
+    }
+
+    public function show(Applicant $applicant): Response
+    {
+        $applicant->load([
+            'user:id,name,email',
+            'programme:id,name,code',
+            'admittedProgramme:id,name,code',
+            'admissionList:id,name',
+            'documents.verifiedBy:id,name',
+            'payments' => fn ($q) => $q->latest(),
+        ]);
+
+        return Inertia::render('admissions/applicant-detail', [
+            'applicant' => $applicant,
+            'documentTypes' => ApplicantDocument::TYPES,
+            'capsStatuses' => array_map(fn ($c) => $c->value, CapsStatus::cases()),
+            'applicationFee' => (float) $applicant->cycle->application_fee,
+            'applicationFeePaid' => $applicant->hasPaidApplicationFee(),
+        ]);
+    }
+
+    public function updateCaps(Request $request, Applicant $applicant): RedirectResponse
+    {
+        $validated = $request->validate([
+            'caps_status' => ['required', Rule::enum(CapsStatus::class)],
+        ]);
+
+        $applicant->update(['caps_status' => $validated['caps_status']]);
+
+        return back()->with('success', "CAPS status updated for {$applicant->application_no}.");
+    }
+
+    public function updateDocument(Request $request, ApplicantDocument $document): RedirectResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['verify', 'reject'])],
+            'note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $document->update([
+            'status' => $validated['action'] === 'verify'
+                ? DocumentStatus::Verified
+                : DocumentStatus::Rejected,
+            'note' => $validated['note'] ?? null,
+            'verified_by_id' => $request->user()->id,
+            'verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'Document '.($validated['action'] === 'verify' ? 'verified' : 'rejected').'.');
+    }
+
+    public function downloadDocument(ApplicantDocument $document): StreamedResponse
+    {
+        return Storage::disk('local')->download($document->path, $document->original_name);
     }
 
     public function updateScore(Request $request, Applicant $applicant): RedirectResponse
