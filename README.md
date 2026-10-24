@@ -7,7 +7,7 @@ between the NUC (university) and NBTE (polytechnic) systems is configuration, no
 
 Built with **Laravel 12**, **React 19** (TypeScript) and **Inertia.js**.
 
-## What's implemented (Phase 1 scaffold)
+## What's implemented
 
 - **Academic structure** — faculties/schools, departments, programmes (B.Sc … ND/HND), levels,
   academic sessions & semesters, courses with credit units and prerequisites, per-programme
@@ -24,13 +24,17 @@ Built with **Laravel 12**, **React 19** (TypeScript) and **Inertia.js**.
   (Paystack, Remita/RRR, Flutterwave, Interswitch, bank).
 - **People & access** — student and staff registries, course allocations, roles via
   spatie/laravel-permission (registrar, bursar, dean, HOD, exam officer, lecturer, student…).
+- **Portals & administration** — student, lecturer, approvals, bursary, admissions,
+  transcripts, clearance, hostels, NYSC/SIWES and staff leave (see the roadmap for details).
+- **Operations** — staff HR (promotions with four-eyes approval, step increments, payroll
+  export), in-app/email/SMS notifications, an append-only audit log, role-scoped analytics
+  dashboards, student ID cards with QR verification, and PDF downloads of every printable.
 - **Seed data** — national grade scales, levels, roles, and a demo university with a
   curriculum, fee schedule and demo accounts.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the data model,
 [`docs/RESEARCH.md`](docs/RESEARCH.md) for the domain research this is built on, and
-[`docs/ROADMAP.md`](docs/ROADMAP.md) for what comes next (portals, admissions, transcripts,
-hostels, NYSC/SIWES).
+[`docs/ROADMAP.md`](docs/ROADMAP.md) for the delivered phases.
 
 ## Getting started
 
@@ -54,6 +58,11 @@ Demo accounts (password: `password`):
 | Librarian (clearance) | `librarian@demo.edu.ng` |
 | Student Affairs (hostels, clearance) | `studentaffairs@demo.edu.ng` |
 | SIWES coordinator | `siwes@demo.edu.ng` |
+| HR officer (promotions, payroll) | `hr@demo.edu.ng` |
+
+SMS is off by default. Set `SMS_ENABLED=true` with `SMS_DRIVER=log` to see messages in the
+log, or `SMS_DRIVER=termii` plus `TERMII_API_KEY` to send them. Mail uses the standard Laravel
+mailer settings; run `php artisan queue:work` so notifications are delivered.
 
 ## Tests
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,7 +24,7 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('lecturer.courses.index');
         }
 
-        return Inertia::render('dashboard');
+        return app(DashboardController::class)->show();
     })->name('dashboard');
 });
 

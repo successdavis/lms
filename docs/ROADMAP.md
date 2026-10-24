@@ -61,6 +61,24 @@
 - [x] SIWES placements: student registration (minimum duration), coordinator approval, grading
       after the attachment (logbook /40, report /40, visits /20, pass mark 40)
 - [x] Staff leave: working-day calculation, annual entitlement, HOD/registry approval
-- [ ] Staff HR: promotions, payroll hooks
-- [ ] Notifications (email/SMS), audit log, reporting dashboards
-- [ ] Student ID cards; PDF versions of the remaining printables
+
+## Phase 5 — Operations
+- [x] Staff HR: salary structure (CONUASS/CONTISS), grade level & step, IPPIS and bank details;
+      rank ladders for universities and polytechnics; promotion recommendation (minimum years
+      in rank, one pending case) and four-eyes approval (the recommender cannot approve);
+      annual step increments capped at the top step; payroll CSV export and a
+      `StaffPromoted` event for payroll integrations
+- [x] Notifications: in-app inbox with unread badge, email, and SMS (log driver for
+      development, Termii for production; Nigerian numbers normalised to 234…) for payments,
+      published results, admission offers, matriculation, transcripts, clearance, leave,
+      hostels, SIWES and promotions; queued after commit
+- [x] Audit log: append-only record of who changed what (old/new values, IP) on results,
+      payments, invoices, fee rules, students, admissions, clearance, hostels, HR and grading
+      configuration, including bulk approvals; registry viewer with filters
+- [x] Reporting dashboards: enrolment by level, registration rate, result approval pipeline,
+      degree-class distribution, probation count; fee collection with monthly trend;
+      admissions funnel; hostel occupancy — each section shown only to the roles that own it,
+      with table views for every chart
+- [x] Student ID cards (passport upload, QR code, CR80 PDF) with signed public verification
+      pages for ID cards and transcripts
+- [x] PDF downloads for the course form, exam card, receipts and admission letter

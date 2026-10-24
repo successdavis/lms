@@ -119,7 +119,17 @@ docs/                     RESEARCH.md (domain research), this file, ROADMAP.md
 | `siwes_placements` | Employer, industry supervisor, dates; graded logbook/report/visits. |
 | `leave_requests` | Working days, annual entitlement, HOD or registry approval. |
 
-## 6. Module roadmap
+## 6. Operations (Phase 5)
 
-See `docs/ROADMAP.md`. Phases 1–4 are implemented; remaining items are staff HR (promotions,
-payroll), notifications, audit logging, analytics dashboards and ID cards.
+| Piece | Notes |
+|---|---|
+| `audit_logs` | Append-only (updates and deletes are refused at the model). The `Auditable` trait records created/updated/deleted with old/new values on audited models; bulk paths that bypass model events (result approvals, NYSC stamping) call `AuditLog::record()` explicitly. |
+| `notifications` | Laravel database notifications. `PortalNotification` subclasses go to the database and mail, and to SMS through `SmsChannel` when `SMS_ENABLED=true`. The `SmsSender` binding picks the log or Termii driver. All are queued after the surrounding transaction commits. |
+| `staff` HR columns / `promotions` | Salary structure, grade level, step, rank since, IPPIS number, bank account. `PromotionService` enforces years in rank and four-eyes approval; approval updates the staff record and fires `StaffPromoted` for payroll integrations. Rank ladders live in `App\Support\StaffRanks`. |
+| Verification | ID cards and transcripts carry a QR code of a signed URL (`/verify/student/{id}`, `/verify/transcript/{id}`); the routes are public but signed and rate-limited. |
+| Printables | `RendersPrintables` serves the same data as an Inertia print page or, with `?format=pdf`, a dompdf PDF from `resources/views/pdf/*`. |
+| Dashboards | `DashboardController` computes each section (academics, finance, admissions, hostels) only for the roles that own it; charts live in `resources/js/components/viz`. |
+
+## 7. Module roadmap
+
+See `docs/ROADMAP.md`. Phases 1–5 are implemented.
