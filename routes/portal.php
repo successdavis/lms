@@ -24,10 +24,12 @@ use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\DocumentController;
 use App\Http\Controllers\Student\FeeController;
 use App\Http\Controllers\Student\HostelController;
+use App\Http\Controllers\Student\IdCardController;
 use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\Student\ResultController;
 use App\Http\Controllers\Student\SiwesController;
 use App\Http\Controllers\Student\TranscriptController;
+use App\Http\Controllers\Verification\VerificationController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +59,10 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 
     Route::get('hostel', [HostelController::class, 'index'])->name('hostel.index');
     Route::post('hostel/{hostel}', [HostelController::class, 'store'])->name('hostel.book');
+
+    Route::get('id-card', [IdCardController::class, 'show'])->name('id-card');
+    Route::post('id-card/passport', [IdCardController::class, 'uploadPassport'])->name('id-card.upload');
+    Route::get('id-card/passport', [IdCardController::class, 'passport'])->name('id-card.passport');
 
     Route::get('siwes', [SiwesController::class, 'show'])->name('siwes.show');
     Route::post('siwes', [SiwesController::class, 'store'])->name('siwes.store');
@@ -183,6 +189,13 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->gr
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
     Route::get('{id}', [NotificationController::class, 'open'])->name('open');
+});
+
+// Public verification behind ID-card and transcript QR codes: signed links, rate limited.
+Route::middleware(['signed', 'throttle:30,1'])->prefix('verify')->name('verify.')->group(function () {
+    Route::get('student/{student}', [VerificationController::class, 'student'])->name('student');
+    Route::get('student/{student}/photo', [VerificationController::class, 'studentPhoto'])->name('student.photo');
+    Route::get('transcript/{transcript}', [VerificationController::class, 'transcript'])->name('transcript');
 });
 
 // Gateway webhooks: signature-authenticated, CSRF-exempt (see bootstrap/app.php).

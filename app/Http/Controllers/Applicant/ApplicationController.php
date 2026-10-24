@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Applicant;
 use App\Enums\ApplicantStatus;
 use App\Enums\DocumentStatus;
 use App\Enums\PaymentStatus;
+use App\Http\Controllers\Concerns\RendersPrintables;
 use App\Http\Controllers\Controller;
 use App\Models\AdmissionCycle;
 use App\Models\Applicant;
@@ -26,6 +27,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicationController extends Controller
 {
+    use RendersPrintables;
+
     /**
      * The applicant's single page: the application form while drafting, a
      * status tracker once submitted, and the offer actions when admitted.
@@ -143,7 +146,7 @@ class ApplicationController extends Controller
         return back()->with('success', 'Offer accepted. You will be matriculated by the admissions office.');
     }
 
-    public function admissionLetter(Request $request): Response
+    public function admissionLetter(Request $request): Response|\Symfony\Component\HttpFoundation\Response
     {
         $applicant = $this->ownApplicant($request);
 
@@ -153,7 +156,7 @@ class ApplicationController extends Controller
 
         $programme = $applicant->admittedProgramme ?? $applicant->programme;
 
-        return Inertia::render('applicant/print/admission-letter', [
+        return $this->printable($request, 'applicant/print/admission-letter', 'pdf.admission-letter', 'admission-letter-'.$applicant->application_no, [
             'institution' => Institution::current()?->only('name', 'short_name', 'motto', 'address'),
             'applicant' => [
                 'name' => $applicant->user->name,

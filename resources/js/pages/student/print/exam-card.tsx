@@ -1,6 +1,7 @@
 import { BioGrid, PrintLayout } from '@/components/portal/print-layout';
 
 interface Props {
+    pdfUrl?: string;
     institution: { name: string; motto?: string } | null;
     student: Record<string, string | null>;
     session: string;
@@ -8,9 +9,9 @@ interface Props {
     courses: { code: string; title: string; credit_units: number }[];
 }
 
-export default function ExamCard({ institution, student, session, semester, courses }: Props) {
+export default function ExamCard({ institution, student, session, semester, courses, pdfUrl }: Props) {
     return (
-        <PrintLayout title="Examination Card" documentTitle="Examination Clearance Card" institution={institution}>
+        <PrintLayout pdfUrl={pdfUrl} title="Examination Card" documentTitle="Examination Clearance Card" institution={institution}>
             <p className="mb-4 rounded border border-black p-2 text-center text-sm font-semibold">
                 This card certifies that the student named below has been cleared (fees fully paid, courses duly registered) to sit the {semester}{' '}
                 examinations, {session} session. Present it with a valid ID at every examination hall.

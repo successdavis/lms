@@ -1,6 +1,7 @@
 import { BioGrid, PrintLayout } from '@/components/portal/print-layout';
 
 interface Props {
+    pdfUrl?: string;
     institution: { name: string; motto?: string; address?: string } | null;
     student: Record<string, string | null>;
     session: string;
@@ -12,9 +13,9 @@ interface Props {
     };
 }
 
-export default function CourseForm({ institution, student, session, semester, registration }: Props) {
+export default function CourseForm({ institution, student, session, semester, registration, pdfUrl }: Props) {
     return (
-        <PrintLayout title="Course Registration Form" documentTitle="Course Registration Form" institution={institution}>
+        <PrintLayout pdfUrl={pdfUrl} title="Course Registration Form" documentTitle="Course Registration Form" institution={institution}>
             <BioGrid
                 student={student}
                 extra={[

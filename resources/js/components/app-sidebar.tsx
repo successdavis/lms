@@ -50,6 +50,7 @@ function navItemsFor(roles: string[], isStaff: boolean, unread: number): NavItem
             { title: 'Transcripts', url: '/student/transcripts', icon: ScrollText },
             { title: 'SIWES', url: '/student/siwes', icon: Briefcase },
             { title: 'Final Clearance', url: '/student/clearance', icon: ClipboardCheck },
+            { title: 'ID Card', url: '/student/id-card', icon: IdCard },
         );
     }
 

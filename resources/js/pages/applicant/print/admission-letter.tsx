@@ -1,6 +1,7 @@
 import { PrintLayout } from '@/components/portal/print-layout';
 
 interface Props {
+    pdfUrl?: string;
     institution: { name: string; short_name?: string; motto?: string; address?: string } | null;
     applicant: { name: string; application_no: string; jamb_reg_no: string | null };
     programme: { name: string; code: string; award: string };
@@ -12,9 +13,20 @@ interface Props {
     accepted: boolean;
 }
 
-export default function AdmissionLetter({ institution, applicant, programme, department, faculty, session, list, admitted_on, accepted }: Props) {
+export default function AdmissionLetter({
+    institution,
+    applicant,
+    programme,
+    department,
+    faculty,
+    session,
+    list,
+    admitted_on,
+    accepted,
+    pdfUrl,
+}: Props) {
     return (
-        <PrintLayout title="Admission Letter" documentTitle="Provisional Offer of Admission" institution={institution}>
+        <PrintLayout pdfUrl={pdfUrl} title="Admission Letter" documentTitle="Provisional Offer of Admission" institution={institution}>
             <div className="space-y-4 text-sm leading-6">
                 <div className="flex justify-between">
                     <div>

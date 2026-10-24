@@ -17,11 +17,13 @@ export function PrintLayout({
     documentTitle,
     institution,
     children,
+    pdfUrl,
 }: {
     title: string;
     documentTitle: string;
     institution: Institution | null;
     children: ReactNode;
+    pdfUrl?: string;
 }) {
     return (
         <div className="min-h-screen bg-white text-black">
@@ -32,9 +34,16 @@ export function PrintLayout({
                     <Link href="/dashboard" className="text-sm text-neutral-500 underline">
                         ← Back to portal
                     </Link>
-                    <button onClick={() => window.print()} className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium">
-                        Print
-                    </button>
+                    <div className="flex gap-2">
+                        {pdfUrl && (
+                            <a href={pdfUrl} className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium">
+                                Download PDF
+                            </a>
+                        )}
+                        <button onClick={() => window.print()} className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium">
+                            Print
+                        </button>
+                    </div>
                 </div>
 
                 <header className="border-b-2 border-black pb-4 text-center">

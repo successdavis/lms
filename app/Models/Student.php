@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class Student extends Model
@@ -92,6 +93,18 @@ class Student extends Model
      * Final-year (or beyond) on the programme's normal duration, e.g. 400L of
      * an 8-semester B.Sc, ND II of a 4-semester ND.
      */
+    /**
+     * ID cards run to the end (September) of the programme's normal final
+     * year, counted from the entry session.
+     */
+    public function idCardValidUntil(): Carbon
+    {
+        $entryYear = (int) explode('/', $this->entrySession->name)[0];
+        $years = (int) ceil($this->programme->duration_semesters / 2);
+
+        return Carbon::create($entryYear + $years, 9, 30);
+    }
+
     public function isInFinalYear(): bool
     {
         return $this->level->rank >= intdiv($this->programme->duration_semesters, 2);

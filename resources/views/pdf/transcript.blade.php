@@ -122,8 +122,11 @@
     </table>
 
     <div class="footer">
+        @if (! empty($verifyQr))
+            <img src="{{ $verifyQr }}" style="width: 52px; height: 52px; float: right;" alt="Verification QR">
+        @endif
         Transcript {{ $transcript->number }} issued to {{ $transcript->recipient_name }}.
-        Verify with the Exams &amp; Records office quoting this number. Not valid if altered.
+        Scan the QR code to verify this transcript online, or contact the Exams &amp; Records office quoting this number. Not valid if altered.
     </div>
 </body>
 </html>

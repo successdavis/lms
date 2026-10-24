@@ -4,6 +4,7 @@ const naira = (value: string | number) =>
     new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2 }).format(Number(value));
 
 interface Props {
+    pdfUrl?: string;
     institution: { name: string; address?: string } | null;
     student: Record<string, string | null>;
     payment: {
@@ -24,9 +25,9 @@ interface Props {
     };
 }
 
-export default function Receipt({ institution, student, payment, invoice }: Props) {
+export default function Receipt({ institution, student, payment, invoice, pdfUrl }: Props) {
     return (
-        <PrintLayout title="Payment Receipt" documentTitle="Official Payment Receipt" institution={institution}>
+        <PrintLayout pdfUrl={pdfUrl} title="Payment Receipt" documentTitle="Official Payment Receipt" institution={institution}>
             <BioGrid
                 student={student}
                 extra={[

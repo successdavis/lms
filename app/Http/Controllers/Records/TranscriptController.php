@@ -8,9 +8,11 @@ use App\Models\Institution;
 use App\Models\TranscriptRequest;
 use App\Notifications\TranscriptUpdated;
 use App\Services\Records\TranscriptBuilder;
+use App\Support\Qr;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -96,6 +98,7 @@ class TranscriptController extends Controller
             'record' => $transcripts->build($student),
             'transcript' => $transcript,
             'issuedOn' => now()->toFormattedDateString(),
+            'verifyQr' => Qr::dataUri(URL::signedRoute('verify.transcript', $transcript), 2),
         ])->setPaper('a4');
 
         return $pdf->download("transcript-{$transcript->number}.pdf");

@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Student;
 
 use App\Enums\PaymentStatus;
+use App\Http\Controllers\Concerns\RendersPrintables;
 use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\Payment;
 use App\Models\Semester;
 use App\Models\Student;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
  * Printable documents: course registration form, examination card, payment
@@ -19,7 +20,9 @@ use Inertia\Response;
  */
 class DocumentController extends Controller
 {
-    public function courseForm(Request $request): Response
+    use RendersPrintables;
+
+    public function courseForm(Request $request): Response|HttpResponse
     {
         $student = $this->student($request);
         $semester = Semester::current();
@@ -33,7 +36,7 @@ class DocumentController extends Controller
 
         abort_if($registration === null, 404, 'No course registration for the current semester.');
 
-        return Inertia::render('student/print/course-form', [
+        return $this->printable($request, 'student/print/course-form', 'pdf.course-form', 'course-form', [
             'institution' => Institution::current()?->only('name', 'short_name', 'motto', 'address'),
             'student' => $this->bio($student),
             'session' => $semester->academicSession->name,
@@ -51,7 +54,7 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function examCard(Request $request): Response
+    public function examCard(Request $request): Response|HttpResponse
     {
         $student = $this->student($request);
         $semester = Semester::current();
@@ -75,7 +78,7 @@ class DocumentController extends Controller
 
         abort_if($unpaid->isNotEmpty(), 403, 'Exam card requires full payment of school fees.');
 
-        return Inertia::render('student/print/exam-card', [
+        return $this->printable($request, 'student/print/exam-card', 'pdf.exam-card', 'exam-card', [
             'institution' => Institution::current()?->only('name', 'short_name', 'motto'),
             'student' => $this->bio($student),
             'session' => $semester->academicSession->name,
@@ -88,7 +91,7 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function receipt(Request $request, Payment $payment): Response
+    public function receipt(Request $request, Payment $payment): Response|HttpResponse
     {
         $student = $this->student($request);
 
@@ -97,7 +100,7 @@ class DocumentController extends Controller
 
         $payment->load('invoice.items.feeType', 'invoice.academicSession');
 
-        return Inertia::render('student/print/receipt', [
+        return $this->printable($request, 'student/print/receipt', 'pdf.receipt', 'receipt-'.$payment->reference, [
             'institution' => Institution::current()?->only('name', 'short_name', 'address'),
             'student' => $this->bio($student),
             'payment' => [
