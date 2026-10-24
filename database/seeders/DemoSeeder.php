@@ -220,6 +220,14 @@ class DemoSeeder extends Seeder
                 'department_id' => $csc->id,
                 'type' => StaffType::Academic,
                 'designation' => 'Senior Lecturer',
+                'salary_structure' => 'CONUASS',
+                'grade_level' => 5,
+                'step' => 4,
+                'rank_since' => '2021-10-01',
+                'employed_on' => '2012-02-01',
+                'ippis_number' => 'IPP120045',
+                'bank_name' => 'First Bank of Nigeria',
+                'account_number' => '3012345678',
             ],
         );
 
@@ -297,6 +305,7 @@ class DemoSeeder extends Seeder
             ['librarian@demo.edu.ng', 'Mr. Tunde Bakare', 'librarian', 'University Librarian', 'FUTD/NA/0002'],
             ['studentaffairs@demo.edu.ng', 'Dr. Halima Musa', 'student-affairs', 'Dean of Student Affairs', 'FUTD/NA/0003'],
             ['siwes@demo.edu.ng', 'Engr. Bola Ige', 'siwes-coordinator', 'SIWES Coordinator', 'FUTD/NA/0004'],
+            ['hr@demo.edu.ng', 'Mrs. Ngozi Okeke', 'hr-officer', 'Deputy Registrar (Establishment)', 'FUTD/NA/0005'],
         ] as [$email, $name, $role, $designation, $staffNo]) {
             $user = User::updateOrCreate(['email' => $email], ['name' => $name, 'password' => Hash::make('password')]);
             $user->assignRole($role);

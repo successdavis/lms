@@ -26,6 +26,7 @@ class RoleSeeder extends Seeder
             'librarian',
             'student-affairs',
             'siwes-coordinator',
+            'hr-officer',
         ] as $role) {
             Role::findOrCreate($role);
         }

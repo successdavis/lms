@@ -21,6 +21,7 @@ class Staff extends Model
         return [
             'type' => StaffType::class,
             'employed_on' => 'date',
+            'rank_since' => 'date',
             'is_active' => 'boolean',
         ];
     }
@@ -43,5 +44,10 @@ class Staff extends Model
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class);
     }
 }

@@ -30,6 +30,13 @@ return [
         'annual_days' => (int) env('ANNUAL_LEAVE_DAYS', 30),
     ],
 
+    'hr' => [
+        // Common Nigerian practice: three years in rank before promotion.
+        'min_years_in_rank' => (int) env('MIN_YEARS_IN_RANK', 3),
+        // Top step of a grade level on the consolidated salary tables.
+        'max_step' => (int) env('MAX_SALARY_STEP', 15),
+    ],
+
     'nysc' => [
         // Graduates aged 30+ at graduation receive an exemption certificate
         // instead of being mobilized.

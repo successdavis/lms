@@ -10,6 +10,8 @@ use App\Http\Controllers\Bursary\PaymentController as BursaryPaymentController;
 use App\Http\Controllers\Bursary\ReportController;
 use App\Http\Controllers\Clearance\ClearanceQueueController;
 use App\Http\Controllers\Hostels\HostelAdminController;
+use App\Http\Controllers\Hr\PromotionController;
+use App\Http\Controllers\Hr\StaffController;
 use App\Http\Controllers\Lecturer\CourseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Records\GraduationController;
@@ -122,6 +124,19 @@ Route::middleware(['auth', 'role:siwes-coordinator|registrar|super-admin'])->pre
     Route::get('placements', [PlacementController::class, 'index'])->name('placements.index');
     Route::patch('placements/{placement}', [PlacementController::class, 'update'])->name('placements.update');
     Route::patch('placements/{placement}/grade', [PlacementController::class, 'grade'])->name('placements.grade');
+});
+
+Route::middleware(['auth', 'role:hr-officer|registrar|super-admin'])->prefix('hr')->name('hr.')->group(function () {
+    Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::patch('staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
+    Route::post('payroll/step-increment', [StaffController::class, 'stepIncrement'])->name('payroll.increment');
+    Route::get('payroll/export', [StaffController::class, 'payrollExport'])->name('payroll.export');
+});
+
+Route::middleware(['auth', 'role:hod|hr-officer|registrar|super-admin'])->prefix('hr')->name('hr.')->group(function () {
+    Route::get('promotions', [PromotionController::class, 'index'])->name('promotions.index');
+    Route::post('promotions', [PromotionController::class, 'store'])->name('promotions.store');
+    Route::patch('promotions/{promotion}', [PromotionController::class, 'update'])->name('promotions.update');
 });
 
 // Staff self-service leave: any user with a staff record (enforced in the controller).

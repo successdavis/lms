@@ -17,11 +17,13 @@ import {
     FileText,
     Folder,
     GraduationCap,
+    IdCard,
     LayoutGrid,
     ListChecks,
     Receipt,
     ScrollText,
     ShieldCheck,
+    TrendingUp,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -97,6 +99,14 @@ function navItemsFor(roles: string[], isStaff: boolean, unread: number): NavItem
 
     if (has('registrar', 'super-admin')) {
         items.push({ title: 'Audit Log', url: '/admin/audit', icon: ShieldCheck });
+    }
+
+    if (has('hr-officer', 'registrar', 'super-admin')) {
+        items.push({ title: 'Staff Register', url: '/hr/staff', icon: IdCard });
+    }
+
+    if (has('hod', 'hr-officer', 'registrar', 'super-admin')) {
+        items.push({ title: 'Promotions', url: '/hr/promotions', icon: TrendingUp });
     }
 
     if (isStaff) {
