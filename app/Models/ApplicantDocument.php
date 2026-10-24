@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\DocumentStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApplicantDocument extends Model
 {
+    use Auditable;
+
     public const TYPES = [
         'olevel_result' => "O'Level Result (WAEC/NECO/NABTEB)",
         'jamb_result' => 'JAMB UTME Result Slip',

@@ -20,6 +20,7 @@ import {
     ListChecks,
     Receipt,
     ScrollText,
+    ShieldCheck,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -88,6 +89,10 @@ function navItemsFor(roles: string[], isStaff: boolean): NavItem[] {
 
     if (has('siwes-coordinator', 'registrar', 'super-admin')) {
         items.push({ title: 'SIWES Placements', url: '/siwes/placements', icon: Briefcase });
+    }
+
+    if (has('registrar', 'super-admin')) {
+        items.push({ title: 'Audit Log', url: '/admin/audit', icon: ShieldCheck });
     }
 
     if (isStaff) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Records;
 
 use App\Enums\StudentStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Student;
 use App\Services\Academics\ResultComputationService;
 use Illuminate\Http\RedirectResponse;
@@ -101,10 +102,18 @@ class GraduationController extends Controller
             ->with(['user:id,name,email', 'programme.gradeScale.classificationBands', 'semesterResults' => fn ($q) => $q->latest('id')])
             ->get();
 
-        DB::transaction(fn () => Student::query()
-            ->whereIn('id', $students->pluck('id'))
-            ->whereNull('nysc_batch')
-            ->update(['nysc_batch' => $validated['batch']]));
+        DB::transaction(function () use ($students, $validated) {
+            $newlyStamped = $students->whereNull('nysc_batch')->pluck('id');
+
+            Student::query()->whereIn('id', $newlyStamped)->update(['nysc_batch' => $validated['batch']]);
+
+            if ($newlyStamped->isNotEmpty()) {
+                AuditLog::record('nysc.batch_stamped', Student::class, null, [
+                    'batch' => $validated['batch'],
+                    'student_ids' => $newlyStamped->all(),
+                ], "{$newlyStamped->count()} graduate(s) stamped for NYSC {$validated['batch']}");
+            }
+        });
 
         $filename = 'nysc-'.str($validated['batch'])->slug().'.csv';
 

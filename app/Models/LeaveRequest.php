@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\LeaveType;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Enums\ResultStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\Result;
 use App\Models\Semester;
@@ -107,6 +108,17 @@ class ApprovalController extends Controller
                 ->get();
 
             Result::query()->whereIn('id', $results->pluck('id'))->update(['status' => $to->value]);
+
+            // One audit record for the batch: who moved which results, from what stage to what.
+            if ($results->isNotEmpty()) {
+                AuditLog::record(
+                    'results.'.$to->value,
+                    $course,
+                    ['status' => $from->value],
+                    ['status' => $to->value, 'semester_id' => $semester->id, 'result_ids' => $results->pluck('id')->all()],
+                    "{$results->count()} result(s) for {$course->code} moved {$from->value} -> {$to->value}",
+                );
+            }
 
             return $results->map(fn (Result $r) => $r->registeredCourse->courseRegistration->student_id)->unique();
         });

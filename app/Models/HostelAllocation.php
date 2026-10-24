@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\AllocationStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HostelAllocation extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

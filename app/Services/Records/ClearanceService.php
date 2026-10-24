@@ -126,8 +126,10 @@ class ClearanceService
      */
     public function resubmit(ClearanceRequest $request): int
     {
-        return $request->items()
-            ->where('status', ClearanceItemStatus::Rejected)
-            ->update(['status' => ClearanceItemStatus::Pending->value, 'reviewed_by_id' => null, 'reviewed_at' => null]);
+        $rejected = $request->items()->where('status', ClearanceItemStatus::Rejected)->get();
+
+        $rejected->each->update(['status' => ClearanceItemStatus::Pending, 'reviewed_by_id' => null, 'reviewed_at' => null]);
+
+        return $rejected->count();
     }
 }

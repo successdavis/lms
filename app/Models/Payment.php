@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

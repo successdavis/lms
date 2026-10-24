@@ -139,15 +139,18 @@ class InvoiceGenerator
      */
     private function settleLinkedService(Invoice $invoice): void
     {
+        // Per-model saves (not a bulk update) so each change is audited.
         match ($invoice->purpose) {
             InvoicePurpose::Transcript => TranscriptRequest::query()
                 ->where('invoice_id', $invoice->id)
                 ->where('status', TranscriptStatus::AwaitingPayment)
-                ->update(['status' => TranscriptStatus::Paid]),
+                ->get()
+                ->each->update(['status' => TranscriptStatus::Paid]),
             InvoicePurpose::Hostel => HostelAllocation::query()
                 ->where('invoice_id', $invoice->id)
                 ->where('status', AllocationStatus::Reserved)
-                ->update(['status' => AllocationStatus::Confirmed, 'expires_at' => null]),
+                ->get()
+                ->each->update(['status' => AllocationStatus::Confirmed, 'expires_at' => null]),
             default => null,
         };
     }

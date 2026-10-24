@@ -6,12 +6,15 @@ use App\Enums\ApplicantStatus;
 use App\Enums\CapsStatus;
 use App\Enums\EntryMode;
 use App\Enums\PaymentStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Applicant extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

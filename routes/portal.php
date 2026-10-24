@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admissions\AdmissionListController;
 use App\Http\Controllers\Admissions\ApplicantController as AdmissionsApplicantController;
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'role:hod|dean|exam-officer|registrar|super-admin'])-
 
 Route::middleware(['auth', 'role:registrar|admission-officer|super-admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('students', [StudentController::class, 'index'])->name('students.index');
+});
+
+Route::middleware(['auth', 'role:registrar|super-admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
 });
 
 Route::middleware(['auth', 'role:bursar|registrar|super-admin'])->prefix('bursary')->name('bursary.')->group(function () {

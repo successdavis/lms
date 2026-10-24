@@ -4,12 +4,15 @@ namespace App\Models;
 
 use App\Enums\InvoicePurpose;
 use App\Enums\InvoiceStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

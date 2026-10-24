@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EntryMode;
 use App\Enums\StudentStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,6 +13,8 @@ use Illuminate\Support\Collection;
 
 class Student extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array

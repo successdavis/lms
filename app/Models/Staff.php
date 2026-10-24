@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\StaffType;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Staff extends Model
 {
+    use Auditable;
+
     protected $table = 'staff';
 
     protected $guarded = [];

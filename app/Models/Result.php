@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ResultStatus;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Result extends Model
 {
+    use Auditable;
+
     protected $guarded = [];
 
     protected function casts(): array
