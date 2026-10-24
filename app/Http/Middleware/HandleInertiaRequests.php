@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'roles' => $request->user()?->getRoleNames() ?? [],
+                'is_staff' => $request->user()?->staff()->exists() ?? false,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

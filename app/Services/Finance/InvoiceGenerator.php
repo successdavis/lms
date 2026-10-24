@@ -2,13 +2,19 @@
 
 namespace App\Services\Finance;
 
+use App\Enums\AllocationStatus;
+use App\Enums\InvoicePurpose;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\TranscriptStatus;
 use App\Models\AcademicSession;
 use App\Models\FeeStructure;
+use App\Models\FeeType;
+use App\Models\HostelAllocation;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Models\TranscriptRequest;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -47,6 +53,7 @@ class InvoiceGenerator
                 'number' => $this->nextNumber($session),
                 'student_id' => $student->id,
                 'academic_session_id' => $session->id,
+                'purpose' => InvoicePurpose::SchoolFees,
                 'total' => $applicable->sum(fn (FeeStructure $s) => (float) $s->amount),
                 'status' => InvoiceStatus::Unpaid,
             ]);
@@ -82,7 +89,67 @@ class InvoiceGenerator
         };
         $invoice->save();
 
+        if ($invoice->status === InvoiceStatus::Paid) {
+            $this->settleLinkedService($invoice);
+        }
+
         return $invoice;
+    }
+
+    /**
+     * A one-line invoice for an on-demand service (transcript, hostel bed),
+     * charged under a non-blocking fee type so it never gates registration.
+     */
+    public function charge(
+        Student $student,
+        AcademicSession $session,
+        InvoicePurpose $purpose,
+        string $feeTypeCode,
+        string $feeTypeName,
+        float $amount,
+        string $description,
+    ): Invoice {
+        $feeType = FeeType::firstOrCreate(
+            ['code' => $feeTypeCode],
+            ['name' => $feeTypeName, 'blocks_registration' => false, 'is_recurring' => true],
+        );
+
+        return DB::transaction(function () use ($student, $session, $purpose, $feeType, $amount, $description) {
+            $invoice = Invoice::create([
+                'number' => $this->nextNumber($session),
+                'student_id' => $student->id,
+                'academic_session_id' => $session->id,
+                'purpose' => $purpose,
+                'total' => $amount,
+                'status' => InvoiceStatus::Unpaid,
+            ]);
+
+            $invoice->items()->create([
+                'fee_type_id' => $feeType->id,
+                'description' => $description,
+                'amount' => $amount,
+            ]);
+
+            return $invoice;
+        });
+    }
+
+    /**
+     * Fully paying a service invoice releases the service it was raised for.
+     */
+    private function settleLinkedService(Invoice $invoice): void
+    {
+        match ($invoice->purpose) {
+            InvoicePurpose::Transcript => TranscriptRequest::query()
+                ->where('invoice_id', $invoice->id)
+                ->where('status', TranscriptStatus::AwaitingPayment)
+                ->update(['status' => TranscriptStatus::Paid]),
+            InvoicePurpose::Hostel => HostelAllocation::query()
+                ->where('invoice_id', $invoice->id)
+                ->where('status', AllocationStatus::Reserved)
+                ->update(['status' => AllocationStatus::Confirmed, 'expires_at' => null]),
+            default => null,
+        };
     }
 
     private function neverCharged(Student $student, int $feeTypeId): bool

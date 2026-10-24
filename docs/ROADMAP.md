@@ -47,9 +47,20 @@
       and owner-only downloads
 
 ## Phase 4 — Extended administration
-- [ ] Transcript generation (PDF) & dispatch tracking
-- [ ] Hostel management (halls, rooms, bed spaces, booking + payment)
-- [ ] Final-year clearance workflows; NYSC mobilization list (universities) /
-      SIWES-IT placement & logbooks (polytechnics)
-- [ ] Staff HR: promotions, leave, payroll hooks
+- [x] Transcripts: student request (local/international × e-copy/hard-copy fee schedule) →
+      transcript invoice → records-office queue → PDF compiled from Senate-approved results
+      (grading key, per-semester GPA/CGPA, classification) → dispatch with tracking reference
+- [x] Hostel management: halls by gender, rooms/bed spaces, booking gated on school fees,
+      48-hour unpaid reservations that lapse and free the bed, confirmation on payment,
+      Student Affairs occupancy and allocation admin
+- [x] Final-year clearance: department, faculty, library, bursary and student-affairs sign-off;
+      HOD/Dean scoped to the student's own department/faculty; bursary blocked by outstanding
+      fees, department by outstanding carryovers; reject-with-note and resubmit
+- [x] Graduation list (cleared, no carryovers) and NYSC mobilization CSV per batch (degree/HND
+      only; under-30 mobilized, 30+ flagged for exemption; each graduate stamped once)
+- [x] SIWES placements: student registration (minimum duration), coordinator approval, grading
+      after the attachment (logbook /40, report /40, visits /20, pass mark 40)
+- [x] Staff leave: working-day calculation, annual entitlement, HOD/registry approval
+- [ ] Staff HR: promotions, payroll hooks
 - [ ] Notifications (email/SMS), audit log, reporting dashboards
+- [ ] Student ID cards; PDF versions of the remaining printables

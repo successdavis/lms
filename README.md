@@ -49,6 +49,11 @@ Demo accounts (password: `password`):
 | Super admin | `admin@demo.edu.ng` |
 | Lecturer | `lecturer@demo.edu.ng` |
 | Student | `student@demo.edu.ng` |
+| Bursar | `bursar@demo.edu.ng` |
+| Applicant | `applicant@demo.edu.ng` |
+| Librarian (clearance) | `librarian@demo.edu.ng` |
+| Student Affairs (hostels, clearance) | `studentaffairs@demo.edu.ng` |
+| SIWES coordinator | `siwes@demo.edu.ng` |
 
 ## Tests
 

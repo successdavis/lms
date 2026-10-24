@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InvoicePurpose;
 use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ class Invoice extends Model
             'total' => 'decimal:2',
             'amount_paid' => 'decimal:2',
             'status' => InvoiceStatus::class,
+            'purpose' => InvoicePurpose::class,
             'due_on' => 'date',
         ];
     }

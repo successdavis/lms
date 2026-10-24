@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Enums\InvoicePurpose;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,8 @@ class FeeController extends Controller
             'invoices' => $invoices,
             'session' => $session?->only('id', 'name'),
             'hasCurrentInvoice' => $session
-                ? $invoices->contains(fn ($invoice) => $invoice->academic_session_id === $session->id)
+                ? $invoices->contains(fn ($invoice) => $invoice->academic_session_id === $session->id
+                    && $invoice->purpose === InvoicePurpose::SchoolFees)
                 : false,
         ]);
     }
@@ -48,7 +50,10 @@ class FeeController extends Controller
             return back()->withErrors(['fees' => 'No current academic session is configured.']);
         }
 
-        if ($student->invoices()->where('academic_session_id', $session->id)->exists()) {
+        if ($student->invoices()
+            ->where('academic_session_id', $session->id)
+            ->where('purpose', InvoicePurpose::SchoolFees)
+            ->exists()) {
             return back()->withErrors(['fees' => 'An invoice already exists for this session.']);
         }
 
@@ -69,6 +74,10 @@ class FeeController extends Controller
 
         if ($invoice->status === InvoiceStatus::Paid) {
             return back()->withErrors(['fees' => 'This invoice is already fully paid.']);
+        }
+
+        if ($invoice->status === InvoiceStatus::Cancelled) {
+            return back()->withErrors(['fees' => 'This invoice was cancelled (e.g. a lapsed hostel reservation) and cannot be paid.']);
         }
 
         $payment = Payment::create([

@@ -3,6 +3,7 @@ import { LucideIcon } from 'lucide-react';
 export interface Auth {
     user: User;
     roles: string[];
+    is_staff?: boolean;
 }
 
 export interface BreadcrumbItem {

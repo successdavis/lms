@@ -7,13 +7,23 @@ use App\Http\Controllers\Applicant\ApplicationController;
 use App\Http\Controllers\Bursary\FeeStructureController;
 use App\Http\Controllers\Bursary\PaymentController as BursaryPaymentController;
 use App\Http\Controllers\Bursary\ReportController;
+use App\Http\Controllers\Clearance\ClearanceQueueController;
+use App\Http\Controllers\Hostels\HostelAdminController;
 use App\Http\Controllers\Lecturer\CourseController;
+use App\Http\Controllers\Records\GraduationController;
+use App\Http\Controllers\Records\TranscriptController as RecordsTranscriptController;
+use App\Http\Controllers\Siwes\PlacementController;
 use App\Http\Controllers\Staff\ApprovalController;
+use App\Http\Controllers\Staff\LeaveController;
+use App\Http\Controllers\Student\ClearanceController;
 use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\DocumentController;
 use App\Http\Controllers\Student\FeeController;
+use App\Http\Controllers\Student\HostelController;
 use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\Student\ResultController;
+use App\Http\Controllers\Student\SiwesController;
+use App\Http\Controllers\Student\TranscriptController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +43,19 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('print/course-form', [DocumentController::class, 'courseForm'])->name('print.course-form');
     Route::get('print/exam-card', [DocumentController::class, 'examCard'])->name('print.exam-card');
     Route::get('print/receipts/{payment}', [DocumentController::class, 'receipt'])->name('print.receipt');
+
+    Route::get('transcripts', [TranscriptController::class, 'index'])->name('transcripts.index');
+    Route::post('transcripts', [TranscriptController::class, 'store'])->name('transcripts.store');
+
+    Route::get('clearance', [ClearanceController::class, 'show'])->name('clearance.show');
+    Route::post('clearance', [ClearanceController::class, 'start'])->name('clearance.start');
+    Route::post('clearance/resubmit', [ClearanceController::class, 'resubmit'])->name('clearance.resubmit');
+
+    Route::get('hostel', [HostelController::class, 'index'])->name('hostel.index');
+    Route::post('hostel/{hostel}', [HostelController::class, 'store'])->name('hostel.book');
+
+    Route::get('siwes', [SiwesController::class, 'show'])->name('siwes.show');
+    Route::post('siwes', [SiwesController::class, 'store'])->name('siwes.store');
 });
 
 Route::middleware(['auth', 'role:lecturer|hod|dean'])->prefix('lecturer')->name('lecturer.')->group(function () {
@@ -62,6 +85,45 @@ Route::middleware(['auth', 'role:bursar|registrar|super-admin'])->prefix('bursar
     Route::patch('payments/{payment}', [BursaryPaymentController::class, 'update'])->name('payments.update');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+});
+
+Route::middleware(['auth', 'role:registrar|exam-officer|super-admin'])->prefix('records')->name('records.')->group(function () {
+    Route::get('transcripts', [RecordsTranscriptController::class, 'index'])->name('transcripts.index');
+    Route::patch('transcripts/{transcript}', [RecordsTranscriptController::class, 'update'])->name('transcripts.update');
+    Route::get('transcripts/{transcript}/pdf', [RecordsTranscriptController::class, 'pdf'])->name('transcripts.pdf');
+});
+
+Route::middleware(['auth', 'role:registrar|super-admin'])->prefix('records')->name('records.')->group(function () {
+    Route::get('graduation', [GraduationController::class, 'index'])->name('graduation.index');
+    Route::post('graduation', [GraduationController::class, 'graduate'])->name('graduation.store');
+    Route::get('graduation/nysc', [GraduationController::class, 'nyscExport'])->name('graduation.nysc');
+});
+
+Route::middleware(['auth', 'role:hod|dean|librarian|bursar|student-affairs|registrar|super-admin'])->prefix('clearance')->name('clearance.')->group(function () {
+    Route::get('/', [ClearanceQueueController::class, 'index'])->name('queue');
+    Route::patch('items/{item}', [ClearanceQueueController::class, 'update'])->name('items.update');
+});
+
+Route::middleware(['auth', 'role:student-affairs|registrar|super-admin'])->prefix('hostels')->name('hostels.')->group(function () {
+    Route::get('/', [HostelAdminController::class, 'index'])->name('index');
+    Route::post('/', [HostelAdminController::class, 'store'])->name('store');
+    Route::post('{hostel}/rooms', [HostelAdminController::class, 'storeRooms'])->name('rooms.store');
+    Route::post('{hostel}/toggle', [HostelAdminController::class, 'toggle'])->name('toggle');
+    Route::delete('allocations/{allocation}', [HostelAdminController::class, 'cancel'])->name('allocations.cancel');
+});
+
+Route::middleware(['auth', 'role:siwes-coordinator|registrar|super-admin'])->prefix('siwes')->name('siwes.')->group(function () {
+    Route::get('placements', [PlacementController::class, 'index'])->name('placements.index');
+    Route::patch('placements/{placement}', [PlacementController::class, 'update'])->name('placements.update');
+    Route::patch('placements/{placement}/grade', [PlacementController::class, 'grade'])->name('placements.grade');
+});
+
+// Staff self-service leave: any user with a staff record (enforced in the controller).
+Route::middleware(['auth'])->prefix('staff/leave')->name('staff.leave.')->group(function () {
+    Route::get('/', [LeaveController::class, 'index'])->name('index');
+    Route::post('/', [LeaveController::class, 'store'])->name('store');
+    Route::get('approvals', [LeaveController::class, 'approvals'])->name('approvals')->middleware('role:hod|registrar|super-admin');
+    Route::patch('{leave}', [LeaveController::class, 'review'])->name('review')->middleware('role:hod|registrar|super-admin');
 });
 
 // Applicant portal: open to any authenticated user without a staff/student

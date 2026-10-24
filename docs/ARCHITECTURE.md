@@ -107,8 +107,19 @@ resources/js/             React (Inertia) pages: admin, student portal, staff po
 docs/                     RESEARCH.md (domain research), this file, ROADMAP.md
 ```
 
-## 5. Module roadmap
+## 5. Extended administration (Phase 4)
 
-See `docs/ROADMAP.md`. Phase 1 (this scaffold): foundation schema, grading engine, seed data.
-Subsequent phases: admissions (post-UTME screening, admission lists), hostel management,
-transcripts (PDF), ID cards, NYSC/SIWES lists, messaging, analytics dashboards.
+| Entity | Notes |
+|---|---|
+| `invoices.purpose` | `school_fees` / `transcript` / `hostel`. Service invoices reuse the payment pipeline; fully paying one releases its service (transcript enters the records queue, hostel bed is confirmed). Only `school_fees` invoices count for the session's fee bill. |
+| `transcript_requests` | Destination × delivery fee schedule (`config/lms.php`), status `awaiting_payment → paid → processing → dispatched` (or `rejected`), dispatch reference. The PDF is built by `TranscriptBuilder`, which also drives the student results page. |
+| `clearance_requests` / `clearance_items` | One item per `ClearanceUnit`; each unit maps to a signing role. `ClearanceService` scopes HOD/Dean to the student's department/faculty and blocks the bursary/department on outstanding fees/carryovers. |
+| `students.graduated_on`, `students.nysc_batch` | Graduation list and NYSC mobilization batches. |
+| `hostels` / `hostel_rooms` / `hostel_allocations` | Bed spaces per session; reservations expire (`expires_at`) unless the hostel invoice is paid. |
+| `siwes_placements` | Employer, industry supervisor, dates; graded logbook/report/visits. |
+| `leave_requests` | Working days, annual entitlement, HOD or registry approval. |
+
+## 6. Module roadmap
+
+See `docs/ROADMAP.md`. Phases 1–4 are implemented; remaining items are staff HR (promotions,
+payroll), notifications, audit logging, analytics dashboards and ID cards.

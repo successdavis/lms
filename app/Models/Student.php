@@ -7,6 +7,7 @@ use App\Enums\StudentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 class Student extends Model
@@ -20,6 +21,7 @@ class Student extends Model
             'entry_mode' => EntryMode::class,
             'date_of_birth' => 'date',
             'is_indigene' => 'boolean',
+            'graduated_on' => 'date',
         ];
     }
 
@@ -61,6 +63,35 @@ class Student extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function transcriptRequests(): HasMany
+    {
+        return $this->hasMany(TranscriptRequest::class);
+    }
+
+    public function clearanceRequest(): HasOne
+    {
+        return $this->hasOne(ClearanceRequest::class);
+    }
+
+    public function hostelAllocations(): HasMany
+    {
+        return $this->hasMany(HostelAllocation::class);
+    }
+
+    public function siwesPlacements(): HasMany
+    {
+        return $this->hasMany(SiwesPlacement::class);
+    }
+
+    /**
+     * Final-year (or beyond) on the programme's normal duration, e.g. 400L of
+     * an 8-semester B.Sc, ND II of a 4-semester ND.
+     */
+    public function isInFinalYear(): bool
+    {
+        return $this->level->rank >= intdiv($this->programme->duration_semesters, 2);
     }
 
     /**

@@ -36,4 +36,9 @@ class Staff extends Model
     {
         return $this->hasMany(CourseAllocation::class);
     }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
 }

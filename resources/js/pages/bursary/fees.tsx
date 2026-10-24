@@ -41,7 +41,12 @@ interface Props {
 }
 
 export default function BursaryFees({ sessions, selectedSession, feeTypes, programmes, levels }: Props) {
-    const typeForm = useForm({ name: '', code: '', blocks_registration: false, is_recurring: true });
+    const typeForm = useForm<{ name: string; code: string; blocks_registration: boolean; is_recurring: boolean }>({
+        name: '',
+        code: '',
+        blocks_registration: false,
+        is_recurring: true,
+    });
     const structureForm = useForm({
         fee_type_id: '',
         academic_session_id: String(selectedSession ?? ''),
@@ -58,14 +63,13 @@ export default function BursaryFees({ sessions, selectedSession, feeTypes, progr
 
     const submitStructure = (e: React.FormEvent) => {
         e.preventDefault();
-        structureForm
-            .transform((data) => ({
-                ...data,
-                programme_id: data.programme_id || null,
-                level_id: data.level_id || null,
-                indigene_scope: data.indigene_scope || null,
-            }))
-            .post('/bursary/fees/structures', { onSuccess: () => structureForm.reset('amount') });
+        structureForm.transform((data) => ({
+            ...data,
+            programme_id: data.programme_id || null,
+            level_id: data.level_id || null,
+            indigene_scope: data.indigene_scope || null,
+        }));
+        structureForm.post('/bursary/fees/structures', { onSuccess: () => structureForm.reset('amount') });
     };
 
     return (

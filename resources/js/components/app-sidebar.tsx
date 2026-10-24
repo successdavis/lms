@@ -6,8 +6,12 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
+    BedDouble,
     BookOpen,
+    Briefcase,
+    CalendarDays,
     CheckSquare,
+    ClipboardCheck,
     ClipboardList,
     FileText,
     Folder,
@@ -15,12 +19,13 @@ import {
     LayoutGrid,
     ListChecks,
     Receipt,
+    ScrollText,
     Users,
     Wallet,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
-function navItemsFor(roles: string[]): NavItem[] {
+function navItemsFor(roles: string[], isStaff: boolean): NavItem[] {
     const has = (...names: string[]) => names.some((name) => roles.includes(name));
     const items: NavItem[] = [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }];
 
@@ -34,6 +39,10 @@ function navItemsFor(roles: string[]): NavItem[] {
             { title: 'Course Registration', url: '/student/registration', icon: ClipboardList },
             { title: 'My Results', url: '/student/results', icon: BookOpen },
             { title: 'Fees & Payments', url: '/student/fees', icon: Wallet },
+            { title: 'Hostel', url: '/student/hostel', icon: BedDouble },
+            { title: 'Transcripts', url: '/student/transcripts', icon: ScrollText },
+            { title: 'SIWES', url: '/student/siwes', icon: Briefcase },
+            { title: 'Final Clearance', url: '/student/clearance', icon: ClipboardCheck },
         );
     }
 
@@ -61,6 +70,34 @@ function navItemsFor(roles: string[]): NavItem[] {
         );
     }
 
+    if (has('registrar', 'exam-officer', 'super-admin')) {
+        items.push({ title: 'Transcript Requests', url: '/records/transcripts', icon: ScrollText });
+    }
+
+    if (has('registrar', 'super-admin')) {
+        items.push({ title: 'Graduation & NYSC', url: '/records/graduation', icon: GraduationCap });
+    }
+
+    if (has('hod', 'dean', 'librarian', 'bursar', 'student-affairs', 'registrar', 'super-admin')) {
+        items.push({ title: 'Clearance Queue', url: '/clearance', icon: ClipboardCheck });
+    }
+
+    if (has('student-affairs', 'registrar', 'super-admin')) {
+        items.push({ title: 'Hostels', url: '/hostels', icon: BedDouble });
+    }
+
+    if (has('siwes-coordinator', 'registrar', 'super-admin')) {
+        items.push({ title: 'SIWES Placements', url: '/siwes/placements', icon: Briefcase });
+    }
+
+    if (isStaff) {
+        items.push({ title: 'My Leave', url: '/staff/leave', icon: CalendarDays });
+    }
+
+    if (has('hod', 'registrar', 'super-admin')) {
+        items.push({ title: 'Leave Approvals', url: '/staff/leave/approvals', icon: CalendarDays });
+    }
+
     return items;
 }
 
@@ -79,7 +116,7 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
-    const mainNavItems = navItemsFor(auth.roles ?? []);
+    const mainNavItems = navItemsFor(auth.roles ?? [], auth.is_staff ?? false);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

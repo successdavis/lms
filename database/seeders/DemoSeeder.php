@@ -15,6 +15,7 @@ use App\Models\Faculty;
 use App\Models\FeeStructure;
 use App\Models\FeeType;
 use App\Models\GradeScale;
+use App\Models\Hostel;
 use App\Models\Institution;
 use App\Models\Level;
 use App\Models\Programme;
@@ -278,5 +279,32 @@ class DemoSeeder extends Seeder
                 'submitted_at' => now(),
             ],
         );
+
+        // Hostels (Student Affairs)
+        foreach ([
+            ['Nnamdi Azikiwe Hall', 'male', 35000, 'NA', 20, 4],
+            ['Queen Amina Hall', 'female', 35000, 'QA', 20, 4],
+        ] as [$name, $gender, $fee, $prefix, $rooms, $beds]) {
+            $hostel = Hostel::updateOrCreate(['name' => $name], ['gender' => $gender, 'fee' => $fee, 'is_active' => true]);
+
+            foreach (range(1, $rooms) as $n) {
+                $hostel->rooms()->firstOrCreate(['number' => $prefix.$n], ['capacity' => $beds]);
+            }
+        }
+
+        // Phase 4 office accounts
+        foreach ([
+            ['librarian@demo.edu.ng', 'Mr. Tunde Bakare', 'librarian', 'University Librarian', 'FUTD/NA/0002'],
+            ['studentaffairs@demo.edu.ng', 'Dr. Halima Musa', 'student-affairs', 'Dean of Student Affairs', 'FUTD/NA/0003'],
+            ['siwes@demo.edu.ng', 'Engr. Bola Ige', 'siwes-coordinator', 'SIWES Coordinator', 'FUTD/NA/0004'],
+        ] as [$email, $name, $role, $designation, $staffNo]) {
+            $user = User::updateOrCreate(['email' => $email], ['name' => $name, 'password' => Hash::make('password')]);
+            $user->assignRole($role);
+
+            Staff::updateOrCreate(
+                ['staff_no' => $staffNo],
+                ['user_id' => $user->id, 'type' => StaffType::NonAcademic, 'designation' => $designation],
+            );
+        }
     }
 }
