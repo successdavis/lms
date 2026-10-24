@@ -58,6 +58,18 @@ return [
         'base_url_root' => env('REMITA_BASE_URL_ROOT', 'https://login.remita.net/remita'),
     ],
 
+    'sms' => [
+        'enabled' => env('SMS_ENABLED', true),
+        // log (development: writes to the log) | termii
+        'driver' => env('SMS_DRIVER', 'log'),
+        'termii' => [
+            'api_key' => env('TERMII_API_KEY'),
+            'sender_id' => env('TERMII_SENDER_ID', 'N-Alert'),
+            'channel' => env('TERMII_CHANNEL', 'dnd'),
+            'base_url' => env('TERMII_BASE_URL', 'https://v3.api.termii.com'),
+        ],
+    ],
+
     'flutterwave' => [
         'secret' => env('FLUTTERWAVE_SECRET_KEY'),
         // The value you set as "secret hash" in the Flutterwave dashboard;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdmissionCycle;
 use App\Models\AdmissionList;
 use App\Models\Applicant;
+use App\Notifications\AdmissionOffered;
 use App\Services\Admissions\AdmissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -68,6 +69,12 @@ class AdmissionListController extends Controller
     public function publish(AdmissionList $list): RedirectResponse
     {
         $list->update(['published_at' => now()]);
+
+        $list->applicants()
+            ->where('status', ApplicantStatus::Admitted)
+            ->with(['user', 'programme', 'admittedProgramme'])
+            ->get()
+            ->each(fn ($applicant) => $applicant->user->notify(AdmissionOffered::for($applicant)));
 
         return back()->with('success', "{$list->name} published — applicants can now see their offers.");
     }

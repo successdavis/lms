@@ -10,6 +10,7 @@ use App\Models\Hostel;
 use App\Models\HostelAllocation;
 use App\Models\Institution;
 use App\Models\Student;
+use App\Notifications\HostelReserved;
 use App\Services\Finance\InvoiceGenerator;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -95,7 +96,7 @@ class HostelService
                 "Hostel: {$hostel->name}, Room {$room->number} ({$session->name})",
             );
 
-            return HostelAllocation::create([
+            $allocation = HostelAllocation::create([
                 'student_id' => $student->id,
                 'hostel_room_id' => $room->id,
                 'academic_session_id' => $session->id,
@@ -103,6 +104,10 @@ class HostelService
                 'status' => AllocationStatus::Reserved,
                 'expires_at' => now()->addHours(config('lms.hostel.reservation_hours')),
             ])->load(['room.hostel', 'invoice']);
+
+            $student->user->notify(HostelReserved::for($allocation));
+
+            return $allocation;
         });
     }
 

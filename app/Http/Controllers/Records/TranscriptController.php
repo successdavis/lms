@@ -6,6 +6,7 @@ use App\Enums\TranscriptStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Institution;
 use App\Models\TranscriptRequest;
+use App\Notifications\TranscriptUpdated;
 use App\Services\Records\TranscriptBuilder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +75,10 @@ class TranscriptController extends Controller
                 'remarks' => $validated['remarks'],
             ],
         });
+
+        if (in_array($validated['action'], ['dispatch', 'reject'], true)) {
+            $transcript->student->user->notify(TranscriptUpdated::for($transcript->fresh()));
+        }
 
         return back()->with('success', "Transcript {$transcript->number} updated.");
     }

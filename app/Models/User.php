@@ -58,4 +58,18 @@ class User extends Authenticatable
     {
         return $this->hasOne(Staff::class);
     }
+
+    public function applicant(): HasOne
+    {
+        return $this->hasOne(Applicant::class)->latestOfMany();
+    }
+
+    /**
+     * Phone for SMS notices: users have no phone of their own, so use the
+     * student, staff or applicant record's.
+     */
+    public function routeNotificationForSms(): ?string
+    {
+        return $this->student?->phone ?? $this->staff?->phone ?? $this->applicant?->phone;
+    }
 }

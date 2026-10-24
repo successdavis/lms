@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Models\Concerns\Auditable;
+use App\Notifications\PaymentReceived;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +24,18 @@ class Payment extends Model
             'paid_at' => 'datetime',
             'meta' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Every settlement path (gateways, webhooks, bursary) ends in a save,
+        // so the receipt notice lives here rather than at each call site.
+        static::saved(function (Payment $payment) {
+            if ($payment->status === PaymentStatus::Successful
+                && ($payment->wasRecentlyCreated || $payment->wasChanged('status'))) {
+                $payment->payerUser()?->notify(PaymentReceived::for($payment));
+            }
+        });
     }
 
     public function invoice(): BelongsTo

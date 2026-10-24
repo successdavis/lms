@@ -11,6 +11,7 @@ use App\Http\Controllers\Bursary\ReportController;
 use App\Http\Controllers\Clearance\ClearanceQueueController;
 use App\Http\Controllers\Hostels\HostelAdminController;
 use App\Http\Controllers\Lecturer\CourseController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Records\GraduationController;
 use App\Http\Controllers\Records\TranscriptController as RecordsTranscriptController;
 use App\Http\Controllers\Siwes\PlacementController;
@@ -161,6 +162,12 @@ Route::middleware(['auth', 'role:admission-officer|registrar|super-admin'])->pre
     Route::post('lists/{list}/publish', [AdmissionListController::class, 'publish'])->name('lists.publish');
     Route::post('lists/{list}/admit', [AdmissionListController::class, 'admit'])->name('lists.admit');
     Route::post('lists/{list}/matriculate', [AdmissionListController::class, 'matriculate'])->name('lists.matriculate');
+});
+
+Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('read-all', [NotificationController::class, 'readAll'])->name('read-all');
+    Route::get('{id}', [NotificationController::class, 'open'])->name('open');
 });
 
 // Gateway webhooks: signature-authenticated, CSRF-exempt (see bootstrap/app.php).

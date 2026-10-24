@@ -4,6 +4,7 @@ export interface Auth {
     user: User;
     roles: string[];
     is_staff?: boolean;
+    unread_notifications?: number;
 }
 
 export interface BreadcrumbItem {

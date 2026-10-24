@@ -7,6 +7,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     BedDouble,
+    Bell,
     BookOpen,
     Briefcase,
     CalendarDays,
@@ -26,9 +27,12 @@ import {
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
-function navItemsFor(roles: string[], isStaff: boolean): NavItem[] {
+function navItemsFor(roles: string[], isStaff: boolean, unread: number): NavItem[] {
     const has = (...names: string[]) => names.some((name) => roles.includes(name));
-    const items: NavItem[] = [{ title: 'Dashboard', url: '/dashboard', icon: LayoutGrid }];
+    const items: NavItem[] = [
+        { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
+        { title: unread > 0 ? `Notifications (${unread})` : 'Notifications', url: '/notifications', icon: Bell },
+    ];
 
     if (has('applicant')) {
         items.push({ title: 'My Application', url: '/apply', icon: FileText });
@@ -121,7 +125,7 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
-    const mainNavItems = navItemsFor(auth.roles ?? [], auth.is_staff ?? false);
+    const mainNavItems = navItemsFor(auth.roles ?? [], auth.is_staff ?? false, auth.unread_notifications ?? 0);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

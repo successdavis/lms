@@ -6,6 +6,7 @@ use App\Enums\LeaveType;
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
 use App\Models\Staff;
+use App\Notifications\LeaveDecided;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -92,6 +93,8 @@ class LeaveController extends Controller
             'reviewed_by_id' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
+
+        $leave->staff->user->notify(LeaveDecided::for($leave->fresh()));
 
         return back()->with('success', 'Leave request '.($validated['action'] === 'approve' ? 'approved' : 'rejected').'.');
     }

@@ -6,6 +6,8 @@ use App\Enums\ApplicantStatus;
 use App\Models\AdmissionList;
 use App\Models\Applicant;
 use App\Models\Student;
+use App\Notifications\AdmissionOffered;
+use App\Notifications\Matriculated;
 use App\Services\Academics\MatricNumberGenerator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +107,10 @@ class AdmissionService
                 'admitted_at' => now(),
             ]);
             $admitted++;
+
+            if ($list->published_at !== null) {
+                $applicant->user->notify(AdmissionOffered::for($applicant->fresh(['programme', 'admittedProgramme'])));
+            }
         }
 
         return ['admitted' => $admitted, 'skipped' => $skipped];
@@ -174,6 +180,7 @@ class AdmissionService
             $user = $applicant->user;
             $user->removeRole('applicant');
             $user->assignRole('student');
+            $user->notify(Matriculated::for($student->fresh('programme')));
 
             return $student;
         });

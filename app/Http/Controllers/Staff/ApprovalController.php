@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Result;
 use App\Models\Semester;
 use App\Models\Student;
+use App\Notifications\ResultsPublished;
 use App\Services\Academics\ResultComputationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -128,6 +129,7 @@ class ApprovalController extends Controller
         if ($to === ResultStatus::SenateApproved) {
             foreach ($affectedStudentIds as $studentId) {
                 $student = Student::find($studentId);
+                $student?->user->notify(ResultsPublished::for($course, $semester));
 
                 $pending = Result::query()
                     ->whereNot('status', ResultStatus::SenateApproved)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Siwes;
 use App\Enums\SiwesStatus;
 use App\Http\Controllers\Controller;
 use App\Models\SiwesPlacement;
+use App\Notifications\SiwesUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -47,6 +48,8 @@ class PlacementController extends Controller
             'reviewed_by_id' => $request->user()->id,
         ]);
 
+        $placement->student->user->notify(SiwesUpdated::for($placement->fresh()));
+
         return back()->with('success', 'Placement '.($validated['action'] === 'approve' ? 'approved' : 'rejected').'.');
     }
 
@@ -74,6 +77,8 @@ class PlacementController extends Controller
             'status' => SiwesStatus::Graded,
             'reviewed_by_id' => $request->user()->id,
         ]);
+
+        $placement->student->user->notify(SiwesUpdated::for($placement->fresh()));
 
         return back()->with('success', "SIWES graded: {$total}/100 (".($total >= config('lms.siwes.pass_mark') ? 'pass' : 'fail').').');
     }

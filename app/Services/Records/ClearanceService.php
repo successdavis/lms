@@ -10,6 +10,7 @@ use App\Models\ClearanceItem;
 use App\Models\ClearanceRequest;
 use App\Models\Student;
 use App\Models\User;
+use App\Notifications\ClearanceUpdated;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -113,8 +114,15 @@ class ClearanceService
             $request = $item->clearanceRequest;
             $allCleared = $request->items()->where('status', '!=', ClearanceItemStatus::Cleared)->doesntExist();
 
+            $studentUser = $request->student->user;
+
+            if ($action !== 'clear') {
+                $studentUser->notify(ClearanceUpdated::rejected($item));
+            }
+
             if ($allCleared) {
                 $request->update(['status' => 'cleared', 'cleared_at' => now()]);
+                $studentUser->notify(ClearanceUpdated::completed());
             }
 
             return $item;
