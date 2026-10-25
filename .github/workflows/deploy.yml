@@ -1,0 +1,176 @@
+name: deploy
+
+# Deploys unelvo.com whenever main changes (or on demand from the Actions
+# tab). The server keeps a git checkout of this repository; this workflow
+# SSHes in, makes that checkout match origin/main exactly, and refreshes
+# dependencies, front-end assets, migrations and caches.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   SSH_HOST      server hostname or IP
+#   SSH_USER      user that owns the site files
+#   SSH_KEY       private key whose public half is in that user's authorized_keys
+#   DEPLOY_PATH   absolute path of the Laravel project on the server
+# Optional secrets:
+#   SSH_PORT         defaults to 22
+#   SSH_KNOWN_HOSTS  output of `ssh-keyscan -p <port> <host>`; recommended,
+#                    otherwise the host key is trusted on first use each run
+# Optional repository variables:
+#   PHP_BIN       PHP binary on the server, defaults to `php`
+#   COMPOSER_BIN  Composer command on the server, defaults to `composer`
+#   NPM_BIN       npm command on the server, defaults to `npm`
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+
+      - name: Build Assets
+        run: npm run build
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Tests
+        run: ./vendor/bin/pest
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://unelvo.com
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          for name in SSH_HOST SSH_USER SSH_KEY DEPLOY_PATH; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret $name"
+              exit 1
+            fi
+          done
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          port="${SSH_PORT:-22}"
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            echo "::warning::SSH_KNOWN_HOSTS is not set; trusting the host key from ssh-keyscan"
+            ssh-keyscan -p "$port" -H "$SSH_HOST" > ~/.ssh/known_hosts
+          fi
+
+          cat > ~/.ssh/config <<EOF
+          Host production
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $port
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Deploy
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PHP_BIN: ${{ vars.PHP_BIN || 'php' }}
+          COMPOSER_BIN: ${{ vars.COMPOSER_BIN || 'composer' }}
+          NPM_BIN: ${{ vars.NPM_BIN || 'npm' }}
+        run: |
+          args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN" "$COMPOSER_BIN" "$NPM_BIN")
+          ssh production "bash -s -- $args" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_PATH="$1"
+          PHP_BIN="$2"
+          COMPOSER_BIN="$3"
+          NPM_BIN="$4"
+
+          cd "$DEPLOY_PATH"
+
+          # Leave maintenance mode even if a later step fails.
+          trap '"$PHP_BIN" artisan up || true' EXIT
+          "$PHP_BIN" artisan down --retry=30 || true
+
+          git fetch --prune origin main
+
+          # Edits made directly on the server would block a pull. Keep a
+          # patch of them in storage/ before discarding, so nothing is
+          # lost silently. Untracked and ignored files (.env, uploads,
+          # vendor) are left alone.
+          if ! git diff --quiet HEAD; then
+            backup="storage/app/deploy-backups/$(date +%Y%m%d-%H%M%S).patch"
+            mkdir -p "$(dirname "$backup")"
+            git diff HEAD > "$backup"
+            echo "Server had local changes; saved to $backup:"
+            git diff --stat HEAD
+          fi
+
+          git checkout --force -B main origin/main
+
+          # --no-scripts: when dev packages are being removed, Laravel's
+          # pre-package-uninstall hook boots the app mid-removal and crashes
+          # on half-deleted dev dependencies. Run discovery afterwards instead,
+          # after dropping the cached manifests (they may list dev providers);
+          # `artisan optimize` below rebuilds them.
+          "$COMPOSER_BIN" install --no-dev --optimize-autoloader \
+            --no-interaction --prefer-dist --no-progress --no-scripts
+          rm -f bootstrap/cache/*.php
+          "$PHP_BIN" artisan package:discover --ansi
+
+          # Built on the server so VITE_* values come from its .env.
+          "$NPM_BIN" ci --no-audit --no-fund
+          "$NPM_BIN" run build
+
+          "$PHP_BIN" artisan migrate --force
+          "$PHP_BIN" artisan optimize:clear
+          "$PHP_BIN" artisan optimize
+
+          echo "Deployed $(git rev-parse --short HEAD)"
+          REMOTE
+
+      - name: Clean Up
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
