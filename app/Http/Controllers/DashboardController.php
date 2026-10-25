@@ -15,7 +15,6 @@ use App\Models\AdmissionCycle;
 use App\Models\Applicant;
 use App\Models\ClassificationBand;
 use App\Models\CourseRegistration;
-use App\Models\Department;
 use App\Models\Hostel;
 use App\Models\Invoice;
 use App\Models\Level;
