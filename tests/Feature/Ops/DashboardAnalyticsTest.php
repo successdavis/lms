@@ -35,10 +35,13 @@ it('gives the registry every section with live figures', function () {
             ->where('finance.fullyPaid', 1)
             ->where('finance.collected', $paid)
             ->where('finance.outstanding', 0)
-            ->has('finance.byMonth', 6)
-            ->where('finance.byMonth.5.label', 'Oct 2025')
-            ->where('finance.byMonth.5.value', $paid)
-            ->where('finance.byMonth.4.value', 0)
+            ->where('finance.received', $paid)
+            ->where('finance.daily', false)
+            ->has('finance.byPeriod', 6)
+            ->where('finance.byPeriod.0.label', 'May 2025')
+            ->where('finance.byPeriod.5.label', 'Oct 2025')
+            ->where('finance.byPeriod.5.value', $paid)
+            ->where('finance.byPeriod.4.value', 0)
             ->where('hostels', fn ($hostels) => collect($hostels)->firstWhere('name', $hall->name)['occupied'] === 1
                 && collect($hostels)->firstWhere('name', $hall->name)['confirmed'] === 0)
             ->has('admissions.funnel', 5));
@@ -82,9 +85,11 @@ it('scopes each section to the roles that own it', function (string $email, arra
 })->with([
     'bursar' => ['bursar@demo.edu.ng', ['finance']],
     'student affairs' => ['studentaffairs@demo.edu.ng', ['hostels']],
-    'hr officer' => ['hr@demo.edu.ng', []],
+    'librarian' => ['librarian@demo.edu.ng', []],
 ]);
 
-it('sends students to their own dashboard', function () {
+it('sends students, lecturers and HR officers to their own dashboards', function () {
     $this->actingAs($this->student->user)->get('/dashboard')->assertRedirect(route('student.dashboard'));
+    $this->actingAs(User::where('email', 'lecturer@demo.edu.ng')->firstOrFail())->get('/dashboard')->assertRedirect(route('lecturer.dashboard'));
+    $this->actingAs(User::where('email', 'hr@demo.edu.ng')->firstOrFail())->get('/dashboard')->assertRedirect(route('hr.dashboard'));
 });

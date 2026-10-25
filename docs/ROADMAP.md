@@ -75,10 +75,19 @@
 - [x] Audit log: append-only record of who changed what (old/new values, IP) on results,
       payments, invoices, fee rules, students, admissions, clearance, hostels, HR and grading
       configuration, including bulk approvals; registry viewer with filters
-- [x] Reporting dashboards: enrolment by level, registration rate, result approval pipeline,
-      degree-class distribution, probation count; fee collection with monthly trend;
-      admissions funnel; hostel occupancy — each section shown only to the roles that own it,
-      with table views for every chart
+- [x] Reporting dashboards: enrolment by level and department, registration rate, result
+      approval pipeline, degree-class distribution, probation count; fee collection with a
+      daily/monthly payment trend; admissions funnel; hostel occupancy — each section shown only
+      to the roles that own it, with table views for every chart
+- [x] Dashboard scoping: HODs see their own department, Deans their own faculty (and can pick
+      one of its departments); registry and central offices can narrow to any faculty or
+      department
+- [x] Dashboard filters: session and semester, and a date range (up to 24 months; daily
+      buckets for a month or less) for payments, leave and promotion activity
+- [x] Dashboard exports: CSV and PDF of exactly what is on screen, recorded in the audit log
+- [x] Teaching dashboard for lecturers (scoring progress, approval stage and grade distribution
+      per course) and HR dashboard (headcount by department/rank/grade level, payroll
+      readiness, staff due for promotion, leave and promotion activity)
 - [x] Student ID cards (passport upload, QR code, CR80 PDF) with signed public verification
       pages for ID cards and transcripts
 - [x] PDF downloads for the course form, exam card, receipts and admission letter

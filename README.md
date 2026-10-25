@@ -27,8 +27,9 @@ Built with **Laravel 12**, **React 19** (TypeScript) and **Inertia.js**.
 - **Portals & administration** — student, lecturer, approvals, bursary, admissions,
   transcripts, clearance, hostels, NYSC/SIWES and staff leave (see the roadmap for details).
 - **Operations** — staff HR (promotions with four-eyes approval, step increments, payroll
-  export), in-app/email/SMS notifications, an append-only audit log, role-scoped analytics
-  dashboards, student ID cards with QR verification, and PDF downloads of every printable.
+  export), in-app/email/SMS notifications, an append-only audit log, analytics
+  dashboards (institution, teaching and HR; scoped to a department or faculty, filterable by
+  session and date range, exportable as CSV/PDF), student ID cards with QR verification, and PDF downloads of every printable.
 - **Seed data** — national grade scales, levels, roles, and a demo university with a
   curriculum, fee schedule and demo accounts.
 

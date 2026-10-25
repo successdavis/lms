@@ -9,23 +9,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        $user = request()->user();
-
-        if ($user->hasRole('student')) {
-            return redirect()->route('student.dashboard');
-        }
-
-        if ($user->hasRole('applicant') || $user->getRoleNames()->isEmpty()) {
-            return redirect()->route('applicant.show');
-        }
-
-        if ($user->hasAnyRole(['lecturer']) && ! $user->hasAnyRole(['hod', 'dean', 'registrar', 'super-admin'])) {
-            return redirect()->route('lecturer.courses.index');
-        }
-
-        return app(DashboardController::class)->show();
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
 });
 
 require __DIR__.'/portal.php';
