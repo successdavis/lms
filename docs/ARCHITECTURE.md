@@ -128,7 +128,7 @@ docs/                     RESEARCH.md (domain research), this file, ROADMAP.md
 | `staff` HR columns / `promotions` | Salary structure, grade level, step, rank since, IPPIS number, bank account. `PromotionService` enforces years in rank and four-eyes approval; approval updates the staff record and fires `StaffPromoted` for payroll integrations. Rank ladders live in `App\Support\StaffRanks`. |
 | Verification | ID cards and transcripts carry a QR code of a signed URL (`/verify/student/{id}`, `/verify/transcript/{id}`); the routes are public but signed and rate-limited. |
 | Printables | `RendersPrintables` serves the same data as an Inertia print page or, with `?format=pdf`, a dompdf PDF from `resources/views/pdf/*`. |
-| Dashboards | `DashboardController` computes each section (academics, finance, admissions, hostels) only for the roles that own it; charts live in `resources/js/components/viz`. |
+| Dashboards | `DashboardController` (institution overview), `Lecturer\TeachingDashboardController` and `Hr\HrDashboardController`. Each section is computed only for the roles that own it. `DashboardScope` decides which departments a user may see (HOD → own department, Dean → own faculty, central offices → anything they pick); `DashboardFilters` parses session/semester and date range; `DashboardExport` turns the same figures into CSV or PDF (`?format=csv\|pdf`). Charts live in `resources/js/components/viz`. |
 
 ## 7. Module roadmap
 

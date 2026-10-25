@@ -10,9 +10,11 @@ use App\Http\Controllers\Bursary\PaymentController as BursaryPaymentController;
 use App\Http\Controllers\Bursary\ReportController;
 use App\Http\Controllers\Clearance\ClearanceQueueController;
 use App\Http\Controllers\Hostels\HostelAdminController;
+use App\Http\Controllers\Hr\HrDashboardController;
 use App\Http\Controllers\Hr\PromotionController;
 use App\Http\Controllers\Hr\StaffController;
 use App\Http\Controllers\Lecturer\CourseController;
+use App\Http\Controllers\Lecturer\TeachingDashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Records\GraduationController;
 use App\Http\Controllers\Records\TranscriptController as RecordsTranscriptController;
@@ -69,6 +71,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 });
 
 Route::middleware(['auth', 'role:lecturer|hod|dean'])->prefix('lecturer')->name('lecturer.')->group(function () {
+    Route::get('dashboard', [TeachingDashboardController::class, 'show'])->name('dashboard');
     Route::get('courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('courses/{course}', [CourseController::class, 'show'])->name('courses.show');
     Route::post('courses/{course}/scores', [CourseController::class, 'storeScores'])->name('courses.scores');
@@ -133,6 +136,7 @@ Route::middleware(['auth', 'role:siwes-coordinator|registrar|super-admin'])->pre
 });
 
 Route::middleware(['auth', 'role:hr-officer|registrar|super-admin'])->prefix('hr')->name('hr.')->group(function () {
+    Route::get('dashboard', [HrDashboardController::class, 'show'])->name('dashboard');
     Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
     Route::patch('staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
     Route::post('payroll/step-increment', [StaffController::class, 'stepIncrement'])->name('payroll.increment');

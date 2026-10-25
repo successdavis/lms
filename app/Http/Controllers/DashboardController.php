@@ -24,42 +24,97 @@ use App\Models\Semester;
 use App\Models\SemesterResult;
 use App\Models\Student;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use App\Support\Dashboard\DashboardExport;
+use App\Support\Dashboard\DashboardFilters;
+use App\Support\Dashboard\DashboardScope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
  * Institution analytics for staff. Each section is computed only for the
- * roles that may see it.
+ * roles that may see it, over the departments the user's scope allows, for
+ * the chosen session/semester and date range. ?format=csv|pdf downloads the
+ * same figures.
  */
 class DashboardController extends Controller
 {
-    public function show(): Response
+    /** Roles that get a section on this overview. */
+    public const OVERVIEW_ROLES = ['exam-officer', 'dean', 'hod', 'bursar', 'admission-officer', 'student-affairs', 'registrar', 'super-admin'];
+
+    private const ACTIVE = [StudentStatus::Active, StudentStatus::Probation, StudentStatus::Spillover];
+
+    public function show(Request $request): Response|RedirectResponse|HttpResponse
     {
         /** @var User $user */
-        $user = request()->user();
+        $user = $request->user();
+
+        if ($user->hasRole('student')) {
+            return redirect()->route('student.dashboard');
+        }
+
+        if ($user->hasRole('applicant') || $user->getRoleNames()->isEmpty()) {
+            return redirect()->route('applicant.show');
+        }
+
+        // Staff without an overview section get their own dashboard.
+        if (! $user->hasAnyRole(self::OVERVIEW_ROLES)) {
+            if ($user->hasRole('hr-officer')) {
+                return redirect()->route('hr.dashboard', $request->query());
+            }
+
+            if ($user->hasRole('lecturer')) {
+                return redirect()->route('lecturer.dashboard', $request->query());
+            }
+        }
+
         $can = fn (string ...$roles) => $user->hasAnyRole([...$roles, 'registrar', 'super-admin']);
+        $filters = DashboardFilters::fromRequest($request);
+        $scope = DashboardScope::forUser($user, $request);
+        $session = $filters->session;
 
-        $session = AcademicSession::current();
-        $semester = Semester::current();
-
-        return Inertia::render('dashboard', [
-            'session' => $session?->name,
-            'semester' => $semester?->name,
-            'academics' => $can('exam-officer', 'dean', 'hod') ? $this->academics($semester) : null,
-            'finance' => $can('bursar') && $session ? $this->finance($session) : null,
-            'admissions' => $can('admission-officer') ? $this->admissions() : null,
+        $data = [
+            'academics' => $can('exam-officer', 'dean', 'hod') ? $this->academics($filters->semester, $scope) : null,
+            'finance' => $can('bursar') && $session ? $this->finance($session, $filters, $scope) : null,
+            'admissions' => $can('admission-officer') && $session ? $this->admissions($session, $scope) : null,
             'hostels' => $can('student-affairs') && $session ? $this->hostels($session) : null,
+        ];
+
+        if (in_array($request->query('format'), ['csv', 'pdf'], true)) {
+            return $this->export($data, $filters, $scope)->download($request->query('format'));
+        }
+
+        return Inertia::render('dashboard', $data + [
+            'session' => $session?->name,
+            'semester' => $filters->semester?->name,
+            'range' => $filters->rangeLabel(),
+            'filters' => $filters->toArray() + ['faculty_id' => $scope->facultyId, 'department_id' => $scope->departmentId],
+            'scope' => $scope->toArray(),
+            'options' => [
+                'sessions' => DashboardFilters::sessionOptions(),
+                'faculties' => $scope->options(),
+            ],
         ]);
     }
 
-    private function academics(?Semester $semester): array
+    /** Limit a student query to the scope's departments. */
+    private function scopeStudents(Builder $query, DashboardScope $scope): Builder
     {
-        $activeStatuses = [StudentStatus::Active, StudentStatus::Probation, StudentStatus::Spillover];
-        $active = Student::query()->whereIn('status', $activeStatuses)->count();
+        return $scope->isInstitution()
+            ? $query
+            : $query->whereHas('programme', fn ($q) => $q->whereIn('department_id', $scope->departmentIds));
+    }
 
-        $byLevel = Student::query()
-            ->whereIn('status', $activeStatuses)
+    private function academics(?Semester $semester, DashboardScope $scope): array
+    {
+        $students = fn () => $this->scopeStudents(Student::query(), $scope);
+        $active = $students()->whereIn('status', self::ACTIVE)->count();
+
+        $byLevel = $students()
+            ->whereIn('status', self::ACTIVE)
             ->selectRaw('level_id, count(*) as total')
             ->groupBy('level_id')
             ->pluck('total', 'level_id');
@@ -68,11 +123,31 @@ class DashboardController extends Controller
             ->map(fn (Level $level) => ['label' => $level->name, 'value' => (int) $byLevel[$level->id]])
             ->values();
 
-        $registered = $semester ? CourseRegistration::query()->where('semester_id', $semester->id)->count() : 0;
+        // Department split, useful whenever the scope spans more than one.
+        $byDepartment = collect();
+        if ($scope->departmentIds === null || count($scope->departmentIds) > 1) {
+            $byDepartment = $students()
+                ->whereIn('status', self::ACTIVE)
+                ->with('programme.department:id,name')
+                ->get(['id', 'programme_id'])
+                ->countBy(fn (Student $s) => $s->programme->department->name)
+                ->sortDesc()
+                ->map(fn ($total, $name) => ['label' => $name, 'value' => $total])
+                ->values();
+        }
 
+        $registered = $semester
+            ? CourseRegistration::query()
+                ->where('semester_id', $semester->id)
+                ->whereIn('student_id', $students()->select('id'))
+                ->count()
+            : 0;
+
+        // The pipeline follows the course's department, like the approval queue.
         $pipeline = $semester
             ? Result::query()
                 ->whereHas('registeredCourse.courseRegistration', fn ($q) => $q->where('semester_id', $semester->id))
+                ->when(! $scope->isInstitution(), fn ($q) => $q->whereHas('registeredCourse.course', fn ($c) => $c->whereIn('department_id', $scope->departmentIds)))
                 ->selectRaw('status, count(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status')
@@ -88,6 +163,7 @@ class DashboardController extends Controller
         // Latest CGPA per student, banded on that student's own grade scale.
         $latest = SemesterResult::query()
             ->whereIn('id', SemesterResult::query()->selectRaw('max(id)')->groupBy('student_id'))
+            ->whereIn('student_id', $students()->select('id'))
             ->with('student.programme')
             ->get();
 
@@ -108,6 +184,7 @@ class DashboardController extends Controller
             'registered' => $registered,
             'onProbation' => $latest->where('standing', AcademicStanding::Probation)->count(),
             'byLevel' => $levels,
+            'byDepartment' => $byDepartment,
             'pipeline' => collect($stages)->map(fn ($label, $status) => ['label' => $label, 'value' => (int) ($pipeline[$status] ?? 0)])->values(),
             'classes' => $classOrder
                 ->filter(fn ($name) => isset($classCounts[$name]))
@@ -116,43 +193,48 @@ class DashboardController extends Controller
         ];
     }
 
-    private function finance(AcademicSession $session): array
+    private function finance(AcademicSession $session, DashboardFilters $filters, DashboardScope $scope): array
     {
-        $schoolFees = Invoice::query()->where('academic_session_id', $session->id)->where('purpose', InvoicePurpose::SchoolFees);
-        $invoiced = (float) (clone $schoolFees)->sum('total');
-        $collected = (float) (clone $schoolFees)->sum('amount_paid');
+        $scopedStudents = $this->scopeStudents(Student::query(), $scope)->select('id');
 
-        // Last six calendar months of successful payments, grouped in PHP so
-        // the query stays portable across SQLite and MySQL.
-        $start = Carbon::now()->startOfMonth()->subMonths(5);
+        $schoolFees = fn () => Invoice::query()
+            ->where('academic_session_id', $session->id)
+            ->where('purpose', InvoicePurpose::SchoolFees)
+            ->when(! $scope->isInstitution(), fn ($q) => $q->whereIn('student_id', $scopedStudents));
+
+        $invoiced = (float) $schoolFees()->sum('total');
+        $collected = (float) $schoolFees()->sum('amount_paid');
+
+        // Successful payments in the date range, bucketed in PHP so the
+        // query stays portable across SQLite and MySQL. A scoped view only
+        // counts its own students' payments (application fees have none).
         $payments = Payment::query()
             ->where('status', PaymentStatus::Successful)
-            ->where('paid_at', '>=', $start)
-            ->get(['amount', 'paid_at'])
-            ->groupBy(fn (Payment $p) => $p->paid_at->format('Y-m'));
+            ->whereBetween('paid_at', [$filters->from, $filters->to])
+            ->when(! $scope->isInstitution(), fn ($q) => $q->whereIn('student_id', $scopedStudents))
+            ->get(['amount', 'paid_at']);
 
-        $months = collect(range(0, 5))->map(function (int $i) use ($start, $payments) {
-            $month = $start->copy()->addMonths($i);
-
-            return [
-                'label' => $month->format('M Y'),
-                'value' => round((float) ($payments[$month->format('Y-m')] ?? collect())->sum('amount'), 2),
-            ];
-        });
+        $grouped = $payments->groupBy(fn (Payment $p) => $filters->bucketKey($p->paid_at));
+        $series = collect($filters->buckets())->map(fn ($label, $key) => [
+            'label' => $label,
+            'value' => round((float) ($grouped[$key] ?? collect())->sum('amount'), 2),
+        ]);
 
         return [
             'invoiced' => $invoiced,
             'collected' => $collected,
-            'invoices' => (clone $schoolFees)->count(),
-            'fullyPaid' => (clone $schoolFees)->where('status', InvoiceStatus::Paid)->count(),
+            'invoices' => $schoolFees()->count(),
+            'fullyPaid' => $schoolFees()->where('status', InvoiceStatus::Paid)->count(),
             'outstanding' => round($invoiced - $collected, 2),
-            'byMonth' => $months->values(),
+            'received' => round((float) $payments->sum('amount'), 2),
+            'daily' => $filters->daily(),
+            'byPeriod' => $series->values(),
         ];
     }
 
-    private function admissions(): ?array
+    private function admissions(AcademicSession $session, DashboardScope $scope): ?array
     {
-        $cycle = AdmissionCycle::current();
+        $cycle = AdmissionCycle::query()->where('academic_session_id', $session->id)->latest('id')->first();
 
         if ($cycle === null) {
             return null;
@@ -160,6 +242,7 @@ class DashboardController extends Controller
 
         $counts = Applicant::query()
             ->where('admission_cycle_id', $cycle->id)
+            ->when(! $scope->isInstitution(), fn ($q) => $q->whereHas('programme', fn ($p) => $p->whereIn('department_id', $scope->departmentIds)))
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -184,6 +267,7 @@ class DashboardController extends Controller
         ];
     }
 
+    /** Halls are shared across departments, so occupancy is never scoped. */
     private function hostels(AcademicSession $session): array
     {
         return Hostel::query()->where('is_active', true)->with('rooms')->orderBy('name')->get()
@@ -202,5 +286,53 @@ class DashboardController extends Controller
                 ];
             })
             ->all();
+    }
+
+    private function export(array $data, DashboardFilters $filters, DashboardScope $scope): DashboardExport
+    {
+        $export = new DashboardExport('Institution overview', array_filter([
+            'Scope' => $scope->label,
+            'Session' => $filters->session?->name,
+            'Semester' => $filters->semester?->name,
+            'Payments from' => $data['finance'] ? $filters->rangeLabel() : null,
+        ]));
+
+        if ($a = $data['academics']) {
+            $export->table('Academics', ['Measure', 'Value'], [
+                ['Active students', $a['activeStudents']],
+                ['Registered this semester', $a['registered']],
+                ['On academic probation', $a['onProbation']],
+            ]);
+            $export->series('Students by level', 'Level', 'Students', $a['byLevel']);
+            if (count($a['byDepartment']) > 0) {
+                $export->series('Students by department', 'Department', 'Students', $a['byDepartment']);
+            }
+            $export->series('Results approval pipeline', 'Stage', 'Course results', $a['pipeline']);
+            $export->series('Students by current class', 'Class', 'Students', $a['classes']);
+        }
+
+        if ($f = $data['finance']) {
+            $export->table('Finance', ['Measure', 'Value'], [
+                ['School fees invoiced (NGN)', $f['invoiced']],
+                ['School fees collected (NGN)', $f['collected']],
+                ['Outstanding school fees (NGN)', $f['outstanding']],
+                ['Payments received in range (NGN)', $f['received']],
+                ['School-fees invoices', $f['invoices']],
+                ['Invoices fully paid', $f['fullyPaid']],
+            ]);
+            $export->series('Payments received by '.($f['daily'] ? 'day' : 'month'), $f['daily'] ? 'Day' : 'Month', 'Amount (NGN)', $f['byPeriod']);
+        }
+
+        if ($ad = $data['admissions']) {
+            $export->series("Admissions funnel ({$ad['session']})", 'Stage', 'Applicants', $ad['funnel']);
+        }
+
+        if (($h = $data['hostels']) !== null) {
+            $export->table('Hostel occupancy', ['Hall', 'Bed spaces', 'Occupied', 'Confirmed', 'Reserved'], collect($h)->map(fn ($hall) => [
+                $hall['name'], $hall['capacity'], $hall['occupied'], $hall['confirmed'], $hall['occupied'] - $hall['confirmed'],
+            ]));
+        }
+
+        return $export;
     }
 }

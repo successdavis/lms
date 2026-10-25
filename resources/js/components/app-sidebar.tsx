@@ -55,7 +55,10 @@ function navItemsFor(roles: string[], isStaff: boolean, unread: number): NavItem
     }
 
     if (has('lecturer', 'hod', 'dean')) {
-        items.push({ title: 'My Courses', url: '/lecturer/courses', icon: BookOpen });
+        items.push(
+            { title: 'Teaching Dashboard', url: '/lecturer/dashboard', icon: BarChart3 },
+            { title: 'My Courses', url: '/lecturer/courses', icon: BookOpen },
+        );
     }
 
     if (has('hod', 'dean', 'exam-officer', 'registrar', 'super-admin')) {
@@ -103,7 +106,7 @@ function navItemsFor(roles: string[], isStaff: boolean, unread: number): NavItem
     }
 
     if (has('hr-officer', 'registrar', 'super-admin')) {
-        items.push({ title: 'Staff Register', url: '/hr/staff', icon: IdCard });
+        items.push({ title: 'HR Dashboard', url: '/hr/dashboard', icon: BarChart3 }, { title: 'Staff Register', url: '/hr/staff', icon: IdCard });
     }
 
     if (has('hod', 'hr-officer', 'registrar', 'super-admin')) {

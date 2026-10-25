@@ -197,16 +197,18 @@ export function ColumnChart({
     data,
     format = compact,
     tooltipFormat = (n: number) => n.toLocaleString(),
+    empty = 'No data for this period.',
 }: {
     data: Datum[];
     format?: (n: number) => string;
     tooltipFormat?: (n: number) => string;
+    empty?: string;
 }) {
     const { containerRef, show, hide, node } = useTooltip();
     const max = Math.max(0, ...data.map((d) => d.value));
 
     if (data.length === 0 || max === 0) {
-        return <EmptyState>No payments recorded in this period.</EmptyState>;
+        return <EmptyState>{empty}</EmptyState>;
     }
 
     const ticks = niceTicks(max);
@@ -214,6 +216,8 @@ export function ColumnChart({
     const plotHeight = 160;
     const latest = data.length - 1;
     const peak = data.reduce((best, d, i) => (d.value > data[best].value ? i : best), 0);
+    // At most ~8 axis labels, counted back from the latest so it is always named.
+    const labelStep = Math.max(1, Math.ceil(data.length / 8));
 
     return (
         <div ref={containerRef} className="relative">
@@ -258,7 +262,7 @@ export function ColumnChart({
                                     tabIndex={0}
                                     role="img"
                                     aria-label={`${d.label}: ${tooltipFormat(d.value)}`}
-                                    className="group relative flex h-full flex-1 items-end justify-center rounded outline-none focus-visible:ring-2"
+                                    className="group relative flex h-full flex-1 items-end justify-center rounded px-px outline-none focus-visible:ring-2"
                                     onPointerEnter={(e) =>
                                         show(e.currentTarget.querySelector('[data-mark]') ?? e.currentTarget, tooltipFormat(d.value), d.label)
                                     }
@@ -291,9 +295,13 @@ export function ColumnChart({
                     </div>
                     {/* x-axis band sits inside the card, so no nested scroll */}
                     <div className="mt-1 flex justify-around">
-                        {data.map((d) => (
-                            <span key={d.label} className="flex-1 text-center text-[10px]" style={{ color: 'var(--viz-text-muted)' }}>
-                                {d.label}
+                        {data.map((d, i) => (
+                            <span
+                                key={d.label}
+                                className="flex-1 text-center text-[10px] whitespace-nowrap"
+                                style={{ color: 'var(--viz-text-muted)' }}
+                            >
+                                {(latest - i) % labelStep === 0 ? d.label : ''}
                             </span>
                         ))}
                     </div>
